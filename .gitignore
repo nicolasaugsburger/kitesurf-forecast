@@ -1,0 +1,16 @@
+# Virtualenv (lives inside the project folder on this machine)
+venv/
+.venv/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+# Environment / secrets
+.env
+
+# Script output — the API replaces this; one copy is kept as a test fixture
+forecast.json
