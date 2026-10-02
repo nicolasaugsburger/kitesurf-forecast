@@ -32,6 +32,14 @@ class Settings(BaseSettings):
     # El puerto 5433 en el host evita chocar con un Postgres local.
     database_url: str = "postgresql+asyncpg://kite:kite@localhost:5433/kitesurf"
 
+    # Origenes del front en desarrollo (Vite). Lista explicita, no "*": con
+    # "*" el navegador ademas prohibe enviar credenciales, y acostumbrarse a
+    # abrirlo del todo es mala costumbre aunque aqui no haya nada que proteger.
+    cors_origins: list[str] = [
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+    ]
+
     display_timezone: str = "Europe/Madrid"
     user_agent: str = "kitesurf-forecast/0.1 (proyecto personal)"
     http_connect_timeout: float = 5.0

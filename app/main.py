@@ -10,6 +10,7 @@ from contextlib import asynccontextmanager
 
 import httpx
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.cache import ForecastCache
 from app.config import settings
@@ -39,5 +40,14 @@ app = FastAPI(
     description="Compara el pronóstico de viento de varios spots de kitesurf.",
     version="0.1.0",
     lifespan=lifespan,
+)
+# Sin esto el navegador bloquea al front: vive en otro puerto, asi que para la
+# politica de mismo origen es otro sitio. Ojo, curl NO lo nota: CORS lo aplica
+# el navegador, no el servidor.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.cors_origins,
+    allow_methods=["GET", "POST"],
+    allow_headers=["*"],
 )
 app.include_router(router)
