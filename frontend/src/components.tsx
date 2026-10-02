@@ -275,3 +275,36 @@ export function anchoMinimo(m: Medidas, dias: number): number {
   const dia = m.celda * 12 + 2 * 11;
   return m.spot + dias * dia + (dias - 1) * 12 + dias * 2;
 }
+
+/* ------------------------------------------------------------------ *
+ * Estructura compartida por la rejilla y el bloque de mejores ventanas.
+ * Viven aquí para que no puedan desalinearse: si una cambia, cambian las dos.
+ * ------------------------------------------------------------------ */
+
+export function filaAlineada(m: Medidas, dias: number, flexible: boolean) {
+  return {
+    display: "flex",
+    gap: 2,
+    width: flexible ? "100%" : "max-content",
+    minWidth: flexible ? anchoMinimo(m, dias) : undefined,
+  } as const;
+}
+
+export function bloqueDia(m: Medidas, di: number, flexible: boolean) {
+  return {
+    ...(flexible ? { flex: "1 1 0", minWidth: m.celda * 12 + 2 * 11 } : { }),
+    marginLeft: di > 0 ? 12 : undefined,
+  } as const;
+}
+
+/** Hueco de la columna de spots: lo que empuja los días a su sitio. */
+export function columnaSpot(m: Medidas) {
+  return {
+    position: "sticky",
+    left: 0,
+    zIndex: 2,
+    width: m.spot,
+    flex: "none",
+    background: "var(--solid-background-base)",
+  } as const;
+}

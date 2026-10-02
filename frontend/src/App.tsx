@@ -2,7 +2,10 @@ import { useState } from "react";
 
 import {
   anchoMinimo,
+  bloqueDia,
   Celda,
+  columnaSpot,
+  filaAlineada,
   Hueco,
   ESCRITORIO,
   EtiquetaSpot,
@@ -64,40 +67,17 @@ function Rejilla({
   pick?: Pick | null;
   onPick?: (p: Pick) => void;
 }) {
-  // Las tres filas (días, horas, spots) comparten esta estructura para que
-  // queden alineadas pase lo que pase con el ancho.
-  const fila = {
-    display: "flex",
-    gap: 2,
-    width: flexible ? "100%" : "max-content",
-    minWidth: flexible ? anchoMinimo(m, dias.length) : undefined,
-  } as const;
-
-  const bloqueDia = (di: number) =>
-    ({
-      display: "flex",
-      gap: 2,
-      ...(flexible
-        ? { flex: "1 1 0", minWidth: m.celda * 12 + 2 * 11 }
-        : {}),
-      marginLeft: di > 0 ? 12 : undefined,
-    }) as const;
-
-  const columnaSpot = {
-    position: "sticky",
-    left: 0,
-    zIndex: 2,
-    width: m.spot,
-    flex: "none",
-    background: "var(--solid-background-base)",
-  } as const;
+  // Las filas comparten estructura con el bloque de mejores ventanas, para
+  // que las columnas de día queden alineadas entre los dos bloques.
+  const fila = filaAlineada(m, dias.length, flexible);
+  const dia = (di: number) => ({ display: "flex", gap: 2, ...bloqueDia(m, di, flexible) });
 
   return (
     <>
       <div style={{ ...fila, marginBottom: 4 }}>
-        <div style={columnaSpot} />
+        <div style={columnaSpot(m)} />
         {dias.map((d, di) => (
-          <div key={d} style={bloqueDia(di)}>
+          <div key={d} style={dia(di)}>
             {HOURS.map((h) => (
               <Hueco key={h} m={m} flexible={flexible}>
                 <div
@@ -125,7 +105,7 @@ function Rejilla({
             m={m}
           />
           {dias.map((d, di) => (
-            <div key={d} style={bloqueDia(di)}>
+            <div key={d} style={dia(di)}>
               {(f.porDia.get(d) ?? []).map((c, i) => (
                 <Hueco key={i} m={m} flexible={flexible}>
                   <Celda
@@ -142,6 +122,25 @@ function Rejilla({
         </div>
       ))}
     </>
+  );
+}
+
+/** Hueco del día sin ventanas: misma caja, en gris. Mantiene la rejilla de
+ *  tarjetas alineada aunque un día no tenga nada que enseñar. */
+function TarjetaVacia() {
+  return (
+    <div
+      style={{
+        padding: "8px 10px",
+        borderRadius: 8,
+        border: "1px solid var(--stroke-control-default)",
+        background: "var(--fill-subtle-secondary)",
+        color: "var(--text-tertiary)",
+        font: "13px/18px var(--font-family)",
+      }}
+    >
+      Sin ventanas
+    </div>
   );
 }
 
@@ -192,7 +191,6 @@ function VistaEscritorio({
   mode: ColorMode;
   onFeedback: (t: TipoFeedback) => void;
 }) {
-  const anchoDia = ESCRITORIO.celda * 12 + 2 * 11;
   const recibido = data.fetched_at.slice(11, 16);
 
   return (
@@ -227,79 +225,96 @@ function VistaEscritorio({
         </div>
       </div>
 
-      <div style={{ padding: "16px 24px 8px", overflow: "auto" }}>
-        {/* Cabecera de días: nombre, ventanas y qué modelo alimenta ese día. */}
+      {/* Un único contenedor con scroll: así la rejilla y las tarjetas de
+          abajo se desplazan juntas y sus columnas no pueden desalinearse. */}
+      <div style={{ overflow: "auto" }}>
         <div
           style={{
-            display: "flex",
-            gap: 2,
-            width: "100%",
-            minWidth: anchoMinimo(ESCRITORIO, grid.dias.length),
-            marginBottom: 4,
+            padding: "16px 24px 8px",
+            minWidth: anchoMinimo(ESCRITORIO, grid.dias.length) + 48,
+            boxSizing: "border-box",
           }}
         >
-          <div style={{ position: "sticky", left: 0, zIndex: 2, width: ESCRITORIO.spot, flex: "none", background: "var(--solid-background-base)" }} />
-          {grid.dias.map((d, di) => {
-            const n = grid.ventanasPorDia.get(d)?.length ?? 0;
-            return (
-              <div
-                key={d}
-                style={{
-                  flex: "1 1 0",
-                  minWidth: anchoDia,
-                  marginLeft: di ? 12 : 0,
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "baseline",
-                  font: "600 14px/20px var(--font-family)",
-                  paddingBottom: 4,
-                  borderBottom: "1px solid var(--stroke-divider)",
-                }}
-              >
-                <span>
-                  {etiquetaDia(d).largo}
-                  <span style={{ fontWeight: 400, color: "var(--text-tertiary)", marginLeft: 8, fontSize: 12 }}>
-                    {n === 1 ? "1 ventana" : `${n} ventanas`}
+          {/* Cabecera de días: nombre, ventanas y qué modelo alimenta ese día. */}
+          <div style={{ ...filaAlineada(ESCRITORIO, grid.dias.length, true), marginBottom: 4 }}>
+            <div style={columnaSpot(ESCRITORIO)} />
+            {grid.dias.map((d, di) => {
+              const n = (grid.ventanasPorDia.get(d) ?? []).filter((v) => v.compensa).length;
+              return (
+                <div
+                  key={d}
+                  style={{
+                    ...bloqueDia(ESCRITORIO, di, true),
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "baseline",
+                    font: "600 14px/20px var(--font-family)",
+                    paddingBottom: 4,
+                    borderBottom: "1px solid var(--stroke-divider)",
+                  }}
+                >
+                  <span>
+                    {etiquetaDia(d).largo}
+                    <span style={{ fontWeight: 400, color: "var(--text-tertiary)", marginLeft: 8, fontSize: 12 }}>
+                      {n === 1 ? "1 ventana" : `${n} ventanas`}
+                    </span>
                   </span>
-                </span>
-                <span style={{ font: "400 11px/14px var(--font-family-mono)", color: "var(--text-tertiary)" }}>
-                  AROME
-                </span>
-              </div>
-            );
-          })}
+                  <span style={{ font: "400 11px/14px var(--font-family-mono)", color: "var(--text-tertiary)" }}>
+                    AROME
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+
+          <Rejilla grid={grid} dias={grid.dias} mode={mode} m={ESCRITORIO} flexible />
         </div>
 
-        <Rejilla grid={grid} dias={grid.dias} mode={mode} m={ESCRITORIO} flexible />
-      </div>
+        {/* Mejores ventanas: una columna por día, alineada con la rejilla. */}
+        <div
+          style={{
+            padding: "16px 24px 24px",
+            borderTop: "1px solid var(--stroke-divider)",
+            minWidth: anchoMinimo(ESCRITORIO, grid.dias.length) + 48,
+            boxSizing: "border-box",
+          }}
+        >
+          <div style={{ font: "600 14px/20px var(--font-family)", marginBottom: 12 }}>
+            Mejores ventanas por día
+          </div>
 
-      {/* Mejores ventanas: una columna por día. */}
-      <div style={{ padding: "16px 24px 24px", borderTop: "1px solid var(--stroke-divider)" }}>
-        <div style={{ font: "600 14px/20px var(--font-family)", marginBottom: 12 }}>
-          Mejores ventanas por día
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: `repeat(${grid.dias.length}, minmax(0,1fr))`, gap: 12 }}>
-          {grid.dias.map((d) => {
-            const todas = grid.ventanasPorDia.get(d) ?? [];
-            const compensan = todas.filter((v) => v.compensa);
-            // Si ninguna compensa, se enseñan las que hay avisando de ello:
-            // mejor eso que un "Sin ventanas" que oculta que habia viento.
-            const mostrar = (compensan.length ? compensan : todas).slice(0, 2);
-            return (
-              <div key={d} style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                <span style={{ font: "600 13px/18px var(--font-family)", color: "var(--text-secondary)" }}>
-                  {etiquetaDia(d).corto}
-                </span>
-                {mostrar.length === 0 ? (
-                  <span style={terciario}>Sin ventanas</span>
-                ) : (
-                  mostrar.map((v, i) => (
-                    <TarjetaVentana key={`${v.spotId}-${v.desde}`} v={v} n={i + 1} grid={grid} />
-                  ))
-                )}
-              </div>
-            );
-          })}
+          <div style={filaAlineada(ESCRITORIO, grid.dias.length, true)}>
+            <div style={columnaSpot(ESCRITORIO)} />
+            {grid.dias.map((d, di) => {
+              const todas = grid.ventanasPorDia.get(d) ?? [];
+              const compensan = todas.filter((v) => v.compensa);
+              // Si ninguna compensa, se enseñan igualmente las que hay: un
+              // "Sin ventanas" que oculta que hubo 24 nudos informa mal.
+              const mostrar = (compensan.length ? compensan : todas).slice(0, 2);
+              return (
+                <div
+                  key={d}
+                  style={{
+                    ...bloqueDia(ESCRITORIO, di, true),
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 6,
+                  }}
+                >
+                  <span style={{ font: "600 13px/18px var(--font-family)", color: "var(--text-secondary)" }}>
+                    {etiquetaDia(d).corto}
+                  </span>
+                  {mostrar.length === 0 ? (
+                    <TarjetaVacia />
+                  ) : (
+                    mostrar.map((v, i) => (
+                      <TarjetaVentana key={`${v.spotId}-${v.desde}`} v={v} n={i + 1} grid={grid} />
+                    ))
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
     </>
