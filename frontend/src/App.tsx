@@ -8,12 +8,11 @@ import {
   EtiquetaSpot,
   Leyenda,
   MOVIL,
-  Rosa,
   type Medidas,
 } from "./components";
 import { Feedback, type TipoFeedback } from "./Feedback";
 import type { ColorMode, Ventana } from "./domain";
-import { CMP_LONG, HOURS, SPOT_META } from "./spots";
+import { CMP_LONG, HOURS } from "./spots";
 import { etiquetaDia, useGrid, type Grid } from "./useGrid";
 import { useForecast } from "./useForecast";
 import { useMediaQuery } from "./useMediaQuery";
@@ -167,6 +166,13 @@ function TarjetaVentana({ v, n, grid }: { v: Ventana; n: number; grid: Grid }) {
       <span style={secundario}>
         {medio.compass} rachas +{Math.round(Math.max(...v.celdas.map((c) => c.delta)))}
       </span>
+      {/* Una ventana en un spot lejano que no da para el viaje sigue siendo
+          informacion util: se muestra, pero dicho claramente. */}
+      {!v.compensa && (
+        <span style={{ font: "12px/16px var(--font-family)", color: "var(--text-tertiary)" }}>
+          No compensa · {fila.drive}
+        </span>
+      )}
     </div>
   );
 }
@@ -179,15 +185,11 @@ function VistaEscritorio({
   grid,
   data,
   mode,
-  setMode,
-  refrescar,
   onFeedback,
 }: {
   grid: Grid;
   data: { model: string; fetched_at: string; age_seconds: number; stale: boolean };
   mode: ColorMode;
-  setMode: (m: ColorMode) => void;
-  refrescar: () => void;
   onFeedback: (t: TipoFeedback) => void;
 }) {
   const anchoDia = ESCRITORIO.celda * 12 + 2 * 11;
@@ -278,47 +280,26 @@ function VistaEscritorio({
         </div>
         <div style={{ display: "grid", gridTemplateColumns: `repeat(${grid.dias.length}, minmax(0,1fr))`, gap: 12 }}>
           {grid.dias.map((d) => {
-            const vs = (grid.ventanasPorDia.get(d) ?? []).slice(0, 2);
-            const desc = grid.descartadosPorDia.get(d) ?? [];
-            const calma = grid.calmaPorDia.get(d) ?? [];
+            const todas = grid.ventanasPorDia.get(d) ?? [];
+            const compensan = todas.filter((v) => v.compensa);
+            // Si ninguna compensa, se enseñan las que hay avisando de ello:
+            // mejor eso que un "Sin ventanas" que oculta que habia viento.
+            const mostrar = (compensan.length ? compensan : todas).slice(0, 2);
             return (
               <div key={d} style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                 <span style={{ font: "600 13px/18px var(--font-family)", color: "var(--text-secondary)" }}>
                   {etiquetaDia(d).corto}
                 </span>
-                {vs.length === 0 ? (
+                {mostrar.length === 0 ? (
                   <span style={terciario}>Sin ventanas</span>
                 ) : (
-                  vs.map((v, i) => (
+                  mostrar.map((v, i) => (
                     <TarjetaVentana key={`${v.spotId}-${v.desde}`} v={v} n={i + 1} grid={grid} />
                   ))
                 )}
-                {/* Por qué se descarta cada spot: vale tanto como saber dónde sí. */}
-                {desc.slice(0, 3).map((x) => (
-                  <span key={x.name} style={terciario}>
-                    {x.name}: {x.why}
-                  </span>
-                ))}
-                {calma.length > 0 && <span style={terciario}>Sin viento: {calma.join(", ")}</span>}
               </div>
             );
           })}
-        </div>
-
-        <div style={{ display: "flex", alignItems: "center", gap: 20, marginTop: 16, flexWrap: "wrap" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, ...secundario }}>
-            <Rosa facing={SPOT_META.castelldefels.facing} size={20} />
-            Rosa del spot: verde lateral, ámbar frontal o side-off, rojo offshore
-          </div>
-          <button
-            onClick={() => setMode(mode === "navegabilidad" ? "velocidad" : "navegabilidad")}
-            style={enlace}
-          >
-            Colorear por: {mode}
-          </button>
-          <button onClick={refrescar} style={enlace}>
-            Actualizar
-          </button>
         </div>
       </div>
     </>
@@ -333,15 +314,11 @@ function VistaMovil({
   grid,
   data,
   mode,
-  setMode,
-  refrescar,
   onFeedback,
 }: {
   grid: Grid;
   data: { model: string; age_seconds: number; stale: boolean };
   mode: ColorMode;
-  setMode: (m: ColorMode) => void;
-  refrescar: () => void;
   onFeedback: (t: TipoFeedback) => void;
 }) {
   const [sel, setSel] = useState(0);
@@ -439,23 +416,9 @@ function VistaMovil({
         <Leyenda mode={mode} />
       </div>
 
-      <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "0 16px 12px", ...secundario }}>
-        <Rosa facing={SPOT_META.castelldefels.facing} size={20} />
-        Rosa del spot: verde lateral, ámbar frontal o side-off, rojo offshore
-      </div>
-
       <div style={{ display: "flex", alignItems: "center", gap: 16, padding: "4px 16px 24px", flexWrap: "wrap" }}>
         <button onClick={() => onFeedback("Nuevo spot")} style={enlace}>
           ¿Falta un spot? Propón uno
-        </button>
-        <button
-          onClick={() => setMode(mode === "navegabilidad" ? "velocidad" : "navegabilidad")}
-          style={enlace}
-        >
-          Colorear por: {mode}
-        </button>
-        <button onClick={refrescar} style={enlace}>
-          Actualizar
         </button>
       </div>
     </>
@@ -483,11 +446,12 @@ function Esqueleto({ m }: { m: Medidas }) {
 }
 
 export default function App() {
-  const { data, cargando, error, refrescar } = useForecast();
+  const { data, cargando, error } = useForecast();
   const grid = useGrid(data);
   const escritorio = useMediaQuery("(min-width: 1000px)");
 
-  const [mode, setMode] = useState<ColorMode>("navegabilidad");
+  // Sin control para cambiarlo: el diseño colorea siempre por navegabilidad.
+  const mode: ColorMode = "navegabilidad";
   const [fb, setFb] = useState<TipoFeedback | null>(null);
 
   return (
@@ -519,8 +483,6 @@ export default function App() {
             grid={grid}
             data={data}
             mode={mode}
-            setMode={setMode}
-            refrescar={refrescar}
             onFeedback={setFb}
           />
         ) : (
@@ -528,8 +490,6 @@ export default function App() {
             grid={grid}
             data={data}
             mode={mode}
-            setMode={setMode}
-            refrescar={refrescar}
             onFeedback={setFb}
           />
         ))}

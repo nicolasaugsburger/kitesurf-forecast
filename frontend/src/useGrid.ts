@@ -37,7 +37,9 @@ export type FilaSpot = {
 export type Grid = {
   dias: string[];
   filas: FilaSpot[];
-  /** ventanas por día, ya ordenadas por score y filtradas por "compensa" */
+  /** TODAS las ventanas del día, ordenadas por score. El filtrado por
+   *  "compensa" se decide al pintar: una ventana que no compensa sigue siendo
+   *  información útil, solo que etiquetada como tal. */
   ventanasPorDia: Map<string, Ventana[]>;
   /** spots sin ninguna ventana, con el motivo */
   descartadosPorDia: Map<string, { name: string; why: string }[]>;
@@ -102,7 +104,7 @@ export function useGrid(data: ForecastResponse | null): Grid | null {
         );
       }
       todas.sort((a, b) => b.score - a.score);
-      ventanasPorDia.set(dia, todas.filter((v) => v.compensa));
+      ventanasPorDia.set(dia, todas);
 
       // Spots sin ventana: ¿por qué? Es tan útil como saber dónde sí hay.
       const conVentana = new Set(todas.map((v) => v.spotId));
