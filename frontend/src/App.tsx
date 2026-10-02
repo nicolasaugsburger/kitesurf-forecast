@@ -151,7 +151,6 @@ function TarjetaVacia() {
     <div
       style={{
         ...tarjetaBase,
-        justifyContent: "center",
         background: "var(--fill-subtle-secondary)",
         color: "var(--text-tertiary)",
         font: "13px/18px var(--font-family)",
@@ -297,12 +296,19 @@ function VistaEscritorio({
             boxSizing: "border-box",
           }}
         >
-          <div style={{ font: "600 14px/20px var(--font-family)", marginBottom: 12 }}>
-            Mejores ventanas por día
-          </div>
-
+          {/* El título ocupa la columna de spots, igual que los nombres en la
+              rejilla de arriba: así arranca a la misma altura que las tarjetas. */}
           <div style={filaAlineada(ESCRITORIO, grid.dias.length, true)}>
-            <div style={columnaSpot(ESCRITORIO)} />
+            <div
+              style={{
+                ...columnaSpot(ESCRITORIO),
+                paddingRight: 12,
+                boxSizing: "border-box",
+                font: "600 14px/20px var(--font-family)",
+              }}
+            >
+              Mejores ventanas por día
+            </div>
             {grid.dias.map((d, di) => {
               const todas = grid.ventanasPorDia.get(d) ?? [];
               const compensan = todas.filter((v) => v.compensa);
@@ -319,9 +325,6 @@ function VistaEscritorio({
                     gap: 6,
                   }}
                 >
-                  <span style={{ font: "600 13px/18px var(--font-family)", color: "var(--text-secondary)" }}>
-                    {etiquetaDia(d).corto}
-                  </span>
                   {mostrar.length === 0 ? (
                     <TarjetaVacia />
                   ) : (
