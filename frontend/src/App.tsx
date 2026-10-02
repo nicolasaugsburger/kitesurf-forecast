@@ -125,15 +125,33 @@ function Rejilla({
   );
 }
 
-/** Hueco del día sin ventanas: misma caja, en gris. Mantiene la rejilla de
- *  tarjetas alineada aunque un día no tenga nada que enseñar. */
+/*
+ * Las dos tarjetas miden lo mismo tenga o no ventana el día.
+ *
+ * El alto sale de la variante más alta, la de 4 líneas:
+ *   18 (nombre) + 16 + 16 + 16 (No compensa) + 3 huecos de 2 = 72
+ *   + 16 de padding + 2 de borde = 90
+ * Con box-sizing: border-box el número es el alto real de la caja.
+ */
+const ALTO_TARJETA = 90;
+
+const tarjetaBase = {
+  minHeight: ALTO_TARJETA,
+  boxSizing: "border-box",
+  padding: "8px 10px",
+  borderRadius: 8,
+  border: "1px solid var(--stroke-control-default)",
+  display: "flex",
+  flexDirection: "column",
+} as const;
+
+/** Hueco del día sin ventanas: misma caja y mismo alto, en gris. */
 function TarjetaVacia() {
   return (
     <div
       style={{
-        padding: "8px 10px",
-        borderRadius: 8,
-        border: "1px solid var(--stroke-control-default)",
+        ...tarjetaBase,
+        justifyContent: "center",
         background: "var(--fill-subtle-secondary)",
         color: "var(--text-tertiary)",
         font: "13px/18px var(--font-family)",
@@ -151,7 +169,7 @@ function TarjetaVentana({ v, n, grid }: { v: Ventana; n: number; grid: Grid }) {
   const kns = v.celdas.map((c) => c.kn);
   const medio = v.celdas[Math.floor(v.celdas.length / 2)];
   return (
-    <div style={{ padding: "8px 10px", borderRadius: 8, border: "1px solid var(--stroke-control-default)", background: "var(--fill-card-default)", display: "flex", flexDirection: "column", gap: 2 }}>
+    <div style={{ ...tarjetaBase, background: "var(--fill-card-default)", gap: 2 }}>
       <span style={{ font: "600 13px/18px var(--font-family)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
         <span style={{ fontFamily: "var(--font-family-mono)", color: "var(--accent-text-primary)", marginRight: 6 }}>
           {n}
