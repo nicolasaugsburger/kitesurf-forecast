@@ -8,7 +8,7 @@ import {
   type Classified,
   type ColorMode,
 } from "./domain";
-import { CMP_LONG, HOURS } from "./spots";
+import { CMP_LONG } from "./spots";
 
 /* Las dos maquetas usan medidas distintas, así que van como constantes y no
    esparcidas por el código. */
@@ -75,10 +75,10 @@ export function Celda({
   onClick?: () => void;
   ml?: number;
 }) {
+  // El ancho lo decide el contenedor: fijo en móvil, flexible en escritorio.
   const base: CSSProperties = {
-    width: m.celda,
+    width: "100%",
     height: m.alto,
-    flex: "none",
     borderRadius: 3,
     marginLeft: ml ? `${ml}px` : undefined,
   };
@@ -125,28 +125,6 @@ export function Celda({
         }}
       />
     </div>
-  );
-}
-
-export function CabeceraHoras({ m, ml = 0 }: { m: Medidas; ml?: number }) {
-  return (
-    <>
-      {HOURS.map((h, i) => (
-        <div
-          key={h}
-          style={{
-            width: m.celda,
-            flex: "none",
-            textAlign: "center",
-            font: "11px/16px var(--font-family-mono)",
-            color: "var(--text-tertiary)",
-            marginLeft: i === 0 && ml ? `${ml}px` : undefined,
-          }}
-        >
-          {h}
-        </div>
-      ))}
-    </>
   );
 }
 
@@ -259,4 +237,41 @@ export function Leyenda({ mode }: { mode: ColorMode }) {
       ))}
     </>
   );
+}
+
+/**
+ * Envoltorio de una celda o de una cabecera de hora.
+ *
+ * En móvil el ancho es fijo. En escritorio crece para repartir el espacio
+ * sobrante, pero nunca baja de la medida del diseño: por debajo de eso la
+ * rejilla hace scroll horizontal en vez de aplastar las celdas.
+ */
+export function Hueco({
+  m,
+  flexible,
+  ml,
+  children,
+}: {
+  m: Medidas;
+  flexible: boolean;
+  ml?: number;
+  children: React.ReactNode;
+}) {
+  return (
+    <div
+      style={
+        flexible
+          ? { flex: "1 1 0", minWidth: m.celda, marginLeft: ml ? `${ml}px` : undefined }
+          : { width: m.celda, flex: "none", marginLeft: ml ? `${ml}px` : undefined }
+      }
+    >
+      {children}
+    </div>
+  );
+}
+
+/** Anchura mínima de la rejilla: por debajo de esto, scroll horizontal. */
+export function anchoMinimo(m: Medidas, dias: number): number {
+  const dia = m.celda * 12 + 2 * 11;
+  return m.spot + dias * dia + (dias - 1) * 12 + dias * 2;
 }

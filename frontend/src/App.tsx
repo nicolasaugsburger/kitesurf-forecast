@@ -1,8 +1,9 @@
 import { useState } from "react";
 
 import {
-  CabeceraHoras,
+  anchoMinimo,
   Celda,
+  Hueco,
   ESCRITORIO,
   EtiquetaSpot,
   Leyenda,
@@ -51,6 +52,7 @@ function Rejilla({
   dias,
   mode,
   m,
+  flexible,
   pick,
   onPick,
 }: {
@@ -58,42 +60,83 @@ function Rejilla({
   dias: string[];
   mode: ColorMode;
   m: Medidas;
+  /** Escritorio: las columnas crecen para llenar el ancho disponible. */
+  flexible: boolean;
   pick?: Pick | null;
   onPick?: (p: Pick) => void;
 }) {
+  // Las tres filas (días, horas, spots) comparten esta estructura para que
+  // queden alineadas pase lo que pase con el ancho.
+  const fila = {
+    display: "flex",
+    gap: 2,
+    width: flexible ? "100%" : "max-content",
+    minWidth: flexible ? anchoMinimo(m, dias.length) : undefined,
+  } as const;
+
+  const bloqueDia = (di: number) =>
+    ({
+      display: "flex",
+      gap: 2,
+      ...(flexible
+        ? { flex: "1 1 0", minWidth: m.celda * 12 + 2 * 11 }
+        : {}),
+      marginLeft: di > 0 ? 12 : undefined,
+    }) as const;
+
+  const columnaSpot = {
+    position: "sticky",
+    left: 0,
+    zIndex: 2,
+    width: m.spot,
+    flex: "none",
+    background: "var(--solid-background-base)",
+  } as const;
+
   return (
     <>
-      {/* Fila de horas. La columna de spots se queda fija al desplazar. */}
-      <div style={{ display: "flex", gap: 2, width: "max-content", marginBottom: 4 }}>
-        <div style={{ position: "sticky", left: 0, zIndex: 2, width: m.spot, flex: "none", background: "var(--solid-background-base)" }} />
+      <div style={{ ...fila, marginBottom: 4 }}>
+        <div style={columnaSpot} />
         {dias.map((d, di) => (
-          <div key={d} style={{ display: "flex", gap: 2 }}>
-            <CabeceraHoras m={m} ml={di > 0 ? 12 : 0} />
+          <div key={d} style={bloqueDia(di)}>
+            {HOURS.map((h) => (
+              <Hueco key={h} m={m} flexible={flexible}>
+                <div
+                  style={{
+                    textAlign: "center",
+                    font: "11px/16px var(--font-family-mono)",
+                    color: "var(--text-tertiary)",
+                  }}
+                >
+                  {h}
+                </div>
+              </Hueco>
+            ))}
           </div>
         ))}
       </div>
 
-      {grid.filas.map((fila) => (
-        <div key={fila.id} style={{ display: "flex", gap: 2, marginBottom: 2, width: "max-content" }}>
+      {grid.filas.map((f) => (
+        <div key={f.id} style={{ ...fila, marginBottom: 2 }}>
           <EtiquetaSpot
-            nombre={m.compass ? fila.name : fila.short}
-            drive={fila.drive}
-            country={fila.country}
-            facing={fila.facing}
+            nombre={m.compass ? f.name : f.short}
+            drive={f.drive}
+            country={f.country}
+            facing={f.facing}
             m={m}
           />
           {dias.map((d, di) => (
-            <div key={d} style={{ display: "flex", gap: 2 }}>
-              {(fila.porDia.get(d) ?? []).map((c, i) => (
-                <Celda
-                  key={i}
-                  c={c}
-                  mode={mode}
-                  m={m}
-                  ml={di > 0 && i === 0 ? 12 : 0}
-                  seleccionada={!!pick && pick.spotId === fila.id && pick.dia === d && pick.i === i}
-                  onClick={onPick ? () => onPick({ spotId: fila.id, dia: d, i }) : undefined}
-                />
+            <div key={d} style={bloqueDia(di)}>
+              {(f.porDia.get(d) ?? []).map((c, i) => (
+                <Hueco key={i} m={m} flexible={flexible}>
+                  <Celda
+                    c={c}
+                    mode={mode}
+                    m={m}
+                    seleccionada={!!pick && pick.spotId === f.id && pick.dia === d && pick.i === i}
+                    onClick={onPick ? () => onPick({ spotId: f.id, dia: d, i }) : undefined}
+                  />
+                </Hueco>
               ))}
             </div>
           ))}
@@ -184,7 +227,15 @@ function VistaEscritorio({
 
       <div style={{ padding: "16px 24px 8px", overflow: "auto" }}>
         {/* Cabecera de días: nombre, ventanas y qué modelo alimenta ese día. */}
-        <div style={{ display: "flex", gap: 2, width: "max-content", marginBottom: 4 }}>
+        <div
+          style={{
+            display: "flex",
+            gap: 2,
+            width: "100%",
+            minWidth: anchoMinimo(ESCRITORIO, grid.dias.length),
+            marginBottom: 4,
+          }}
+        >
           <div style={{ position: "sticky", left: 0, zIndex: 2, width: ESCRITORIO.spot, flex: "none", background: "var(--solid-background-base)" }} />
           {grid.dias.map((d, di) => {
             const n = grid.ventanasPorDia.get(d)?.length ?? 0;
@@ -192,8 +243,8 @@ function VistaEscritorio({
               <div
                 key={d}
                 style={{
-                  width: anchoDia,
-                  flex: "none",
+                  flex: "1 1 0",
+                  minWidth: anchoDia,
                   marginLeft: di ? 12 : 0,
                   display: "flex",
                   justifyContent: "space-between",
@@ -217,7 +268,7 @@ function VistaEscritorio({
           })}
         </div>
 
-        <Rejilla grid={grid} dias={grid.dias} mode={mode} m={ESCRITORIO} />
+        <Rejilla grid={grid} dias={grid.dias} mode={mode} m={ESCRITORIO} flexible />
       </div>
 
       {/* Mejores ventanas: una columna por día. */}
@@ -360,7 +411,7 @@ function VistaMovil({
       </div>
 
       <div style={{ overflow: "auto", margin: "0 6px" }}>
-        <Rejilla grid={grid} dias={[dia]} mode={mode} m={MOVIL} pick={pick} onPick={setPick} />
+        <Rejilla grid={grid} dias={[dia]} mode={mode} m={MOVIL} flexible={false} pick={pick} onPick={setPick} />
       </div>
 
       <div style={{ margin: "8px 12px 0", padding: "8px 12px", borderRadius: 4, background: "var(--fill-subtle-secondary)", font: "13px/18px var(--font-family)", color: "var(--text-secondary)" }}>
