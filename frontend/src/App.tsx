@@ -1,180 +1,87 @@
 import { useState } from "react";
 
-import { ANCHO_SPOT, CabeceraHoras, Celda, EtiquetaSpot, Flecha, Leyenda, Rosa } from "./components";
-import { Feedback } from "./Feedback";
+import {
+  CabeceraHoras,
+  Celda,
+  ESCRITORIO,
+  EtiquetaSpot,
+  Leyenda,
+  MOVIL,
+  Rosa,
+  type Medidas,
+} from "./components";
+import { Feedback, type TipoFeedback } from "./Feedback";
 import type { ColorMode, Ventana } from "./domain";
 import { CMP_LONG, HOURS, SPOT_META } from "./spots";
 import { etiquetaDia, useGrid, type Grid } from "./useGrid";
 import { useForecast } from "./useForecast";
 import { useMediaQuery } from "./useMediaQuery";
 
-const fuente = { font: "12px/16px var(--font-family)", color: "var(--text-secondary)" } as const;
+const secundario = { font: "12px/16px var(--font-family)", color: "var(--text-secondary)" } as const;
+const terciario = { font: "12px/16px var(--font-family)", color: "var(--text-tertiary)" } as const;
 
 type Pick = { spotId: string; dia: string; i: number };
 
-/* ------------------------------------------------------------------ */
+const enlace = {
+  padding: 0,
+  border: 0,
+  background: "none",
+  color: "var(--accent-text-primary)",
+  font: "600 13px/18px var(--font-family)",
+  cursor: "pointer",
+} as const;
 
-function Cabecera({
-  modelo,
-  edad,
-  stale,
-  onFeedback,
-}: {
-  modelo?: string;
-  edad?: number;
-  stale?: boolean;
-  onFeedback: () => void;
-}) {
-  return (
-    <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", padding: "16px 16px 12px", gap: 8 }}>
-      <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-        <div style={{ font: "600 20px/28px var(--font-family)" }}>Viento</div>
-        <div style={{ display: "flex", alignItems: "center", gap: 6, ...fuente }}>
-          <span style={{ width: 8, height: 8, borderRadius: 999, background: stale ? "#EAB308" : "#22C55E" }} />
-          {modelo
-            ? `${modelo.toUpperCase().replace(/_/g, " ")} · hace ${Math.round((edad ?? 0) / 60)} min`
-            : "Cargando…"}
-        </div>
-      </div>
-      <button
-        onClick={onFeedback}
-        style={{ padding: "6px 12px", borderRadius: 4, border: "1px solid var(--stroke-control-default)", background: "var(--fill-control-default)", color: "var(--text-primary)", font: "600 13px/18px var(--font-family)", cursor: "pointer", flex: "none" }}
-      >
-        Sugerencias
-      </button>
-    </div>
-  );
-}
+const boton = {
+  padding: "6px 12px",
+  borderRadius: 4,
+  border: "1px solid var(--stroke-control-default)",
+  background: "var(--fill-control-default)",
+  color: "var(--text-primary)",
+  font: "600 13px/18px var(--font-family)",
+  cursor: "pointer",
+  flex: "none",
+} as const;
 
-function Pestanas({ grid, sel, onSel }: { grid: Grid; sel: number; onSel: (i: number) => void }) {
-  return (
-    <div style={{ display: "flex", gap: 4, padding: "0 12px 12px", overflowX: "auto" }}>
-      {grid.dias.map((d, i) => {
-        const n = grid.ventanasPorDia.get(d)?.length ?? 0;
-        return (
-          <button
-            key={d}
-            onClick={() => onSel(i)}
-            style={{
-              flex: 1,
-              padding: "6px 2px",
-              borderRadius: 4,
-              cursor: "pointer",
-              border: "1px solid var(--stroke-control-default)",
-              background: i === sel ? "var(--system-accent)" : "var(--fill-control-default)",
-              color: i === sel ? "var(--text-on-accent)" : "var(--text-primary)",
-              font: "600 13px/18px var(--font-family)",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: 2,
-            }}
-          >
-            {etiquetaDia(d).corto}
-            <span style={{ font: "400 11px/14px var(--font-family)", opacity: 0.85 }}>
-              {n ? `${n} vent.` : "—"}
-            </span>
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
-function FichaVentana({ v, n, grid }: { v: Ventana; n: number; grid: Grid }) {
-  const fila = grid.filas.find((f) => f.id === v.spotId);
-  if (!fila) return null;
-  const kns = v.celdas.map((c) => c.kn);
-  const medio = v.celdas[Math.floor(v.celdas.length / 2)];
-  return (
-    <div style={{ display: "grid", gridTemplateColumns: "20px minmax(0,1fr) auto", gap: "4px 8px", alignItems: "baseline" }}>
-      <span style={{ font: "600 14px/20px var(--font-family-mono)", color: "var(--accent-text-primary)" }}>{n}</span>
-      <span style={{ font: "600 14px/20px var(--font-family)" }}>
-        {fila.name}{" "}
-        <span style={{ fontWeight: 400, fontSize: 12, color: "var(--text-tertiary)" }}>
-          {fila.drive} de coche
-        </span>
-      </span>
-      <span style={{ font: "600 14px/20px var(--font-family-mono)" }}>
-        {HOURS[v.desde]}–{HOURS[v.hasta - 1] + 1} h
-      </span>
-      <span />
-      <span style={{ gridColumn: "2 / 4", display: "flex", flexWrap: "wrap", alignItems: "center", gap: "4px 10px", ...fuente }}>
-        <span style={{ fontFamily: "var(--font-family-mono)", color: "var(--text-primary)" }}>
-          {Math.round(Math.min(...kns))}–{Math.round(Math.max(...kns))} kn
-        </span>
-        <span>rachas +{Math.round(Math.max(...v.celdas.map((c) => c.delta)))}</span>
-        <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
-          <Flecha dir={medio.dir} size={7} />
-          {CMP_LONG[Math.round(medio.dir / 22.5) % 16]} · {v.horas} h seguidas
-        </span>
-      </span>
-    </div>
-  );
-}
-
-function MejoresVentanas({ grid, dia }: { grid: Grid; dia: string }) {
-  const vs = (grid.ventanasPorDia.get(dia) ?? []).slice(0, 2);
-  const desc = grid.descartadosPorDia.get(dia) ?? [];
-  const calma = grid.calmaPorDia.get(dia) ?? [];
-  return (
-    <div style={{ margin: "12px 12px 0", padding: 12, borderRadius: 8, background: "var(--fill-card-default)", border: "1px solid var(--stroke-control-default)", display: "flex", flexDirection: "column", gap: 10 }}>
-      <span style={fuente}>Mejores ventanas · {etiquetaDia(dia).largo}</span>
-      {vs.length === 0 ? (
-        <span style={{ font: "14px/20px var(--font-family)", color: "var(--text-tertiary)" }}>
-          Ninguna ventana navegable este día.
-        </span>
-      ) : (
-        vs.map((v, i) => <FichaVentana key={`${v.spotId}-${v.desde}`} v={v} n={i + 1} grid={grid} />)
-      )}
-
-      {/* Por qué se descarta cada spot: saberlo vale tanto como saber dónde sí hay. */}
-      {desc.length > 0 && (
-        <div style={{ display: "flex", flexDirection: "column", gap: 3, paddingTop: 2 }}>
-          {desc.map((d) => (
-            <span key={d.name} style={{ font: "12px/16px var(--font-family)", color: "var(--text-tertiary)" }}>
-              {d.name}: {d.why}
-            </span>
-          ))}
-        </div>
-      )}
-      {calma.length > 0 && (
-        <span style={{ font: "12px/16px var(--font-family)", color: "var(--text-tertiary)" }}>
-          Sin viento: {calma.join(", ")}
-        </span>
-      )}
-    </div>
-  );
-}
+/* ------------------------------------------------------------------ *
+ * Piezas compartidas
+ * ------------------------------------------------------------------ */
 
 function Rejilla({
   grid,
   dias,
   mode,
+  m,
   pick,
   onPick,
 }: {
   grid: Grid;
   dias: string[];
   mode: ColorMode;
-  pick: Pick | null;
-  onPick: (p: Pick) => void;
+  m: Medidas;
+  pick?: Pick | null;
+  onPick?: (p: Pick) => void;
 }) {
   return (
-    <div style={{ overflow: "auto", margin: "0 6px" }}>
-      {/* Cabecera de horas: pegada arriba al hacer scroll vertical. */}
-      <div style={{ display: "flex", gap: 2, position: "sticky", top: 0, zIndex: 2, background: "var(--solid-background-base)", width: "max-content", paddingBottom: 4 }}>
-        <div style={{ position: "sticky", left: 0, width: ANCHO_SPOT, flex: "none", background: "var(--solid-background-base)" }} />
+    <>
+      {/* Fila de horas. La columna de spots se queda fija al desplazar. */}
+      <div style={{ display: "flex", gap: 2, width: "max-content", marginBottom: 4 }}>
+        <div style={{ position: "sticky", left: 0, zIndex: 2, width: m.spot, flex: "none", background: "var(--solid-background-base)" }} />
         {dias.map((d, di) => (
           <div key={d} style={{ display: "flex", gap: 2 }}>
-            <CabeceraHoras ml={di > 0 ? 12 : 0} />
+            <CabeceraHoras m={m} ml={di > 0 ? 12 : 0} />
           </div>
         ))}
       </div>
 
       {grid.filas.map((fila) => (
         <div key={fila.id} style={{ display: "flex", gap: 2, marginBottom: 2, width: "max-content" }}>
-          <EtiquetaSpot short={fila.short} drive={fila.drive} country={fila.country} facing={fila.facing} />
+          <EtiquetaSpot
+            nombre={m.compass ? fila.name : fila.short}
+            drive={fila.drive}
+            country={fila.country}
+            facing={fila.facing}
+            m={m}
+          />
           {dias.map((d, di) => (
             <div key={d} style={{ display: "flex", gap: 2 }}>
               {(fila.porDia.get(d) ?? []).map((c, i) => (
@@ -182,54 +89,216 @@ function Rejilla({
                   key={i}
                   c={c}
                   mode={mode}
+                  m={m}
                   ml={di > 0 && i === 0 ? 12 : 0}
                   seleccionada={!!pick && pick.spotId === fila.id && pick.dia === d && pick.i === i}
-                  onClick={() => onPick({ spotId: fila.id, dia: d, i })}
+                  onClick={onPick ? () => onPick({ spotId: fila.id, dia: d, i }) : undefined}
                 />
               ))}
             </div>
           ))}
         </div>
       ))}
-    </div>
+    </>
   );
 }
 
-function Esqueleto() {
+/** Tarjeta compacta de ventana, la del panel inferior de escritorio. */
+function TarjetaVentana({ v, n, grid }: { v: Ventana; n: number; grid: Grid }) {
+  const fila = grid.filas.find((f) => f.id === v.spotId);
+  if (!fila) return null;
+  const kns = v.celdas.map((c) => c.kn);
+  const medio = v.celdas[Math.floor(v.celdas.length / 2)];
   return (
-    <div style={{ padding: "0 6px" }}>
-      {[60, 48, 56, 72, 52, 64, 44, 58].map((w, r) => (
-        <div key={r} style={{ display: "flex", gap: 2, marginBottom: 2, alignItems: "center" }}>
-          <div style={{ width: ANCHO_SPOT, flex: "none", display: "flex", alignItems: "center", gap: 6 }}>
-            <div style={{ width: 26, height: 26, borderRadius: 999, background: "var(--fill-subtle-secondary)" }} />
-            <div style={{ width: w, height: 10, borderRadius: 3, background: "var(--fill-subtle-secondary)" }} />
-          </div>
-          {HOURS.map((h) => (
-            <div key={h} style={{ width: 20, height: 36, borderRadius: 3, background: "var(--fill-subtle-tertiary)" }} />
-          ))}
-        </div>
-      ))}
+    <div style={{ padding: "8px 10px", borderRadius: 8, border: "1px solid var(--stroke-control-default)", background: "var(--fill-card-default)", display: "flex", flexDirection: "column", gap: 2 }}>
+      <span style={{ font: "600 13px/18px var(--font-family)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+        <span style={{ fontFamily: "var(--font-family-mono)", color: "var(--accent-text-primary)", marginRight: 6 }}>
+          {n}
+        </span>
+        {fila.short}
+      </span>
+      <span style={{ font: "12px/16px var(--font-family-mono)" }}>
+        {HOURS[v.desde]}–{HOURS[v.hasta - 1] + 1} h · {Math.round(Math.min(...kns))}–
+        {Math.round(Math.max(...kns))} kn
+      </span>
+      <span style={secundario}>
+        {medio.compass} rachas +{Math.round(Math.max(...v.celdas.map((c) => c.delta)))}
+      </span>
     </div>
   );
 }
 
-/* ------------------------------------------------------------------ */
+/* ------------------------------------------------------------------ *
+ * Escritorio
+ * ------------------------------------------------------------------ */
 
-export default function App() {
-  const { data, cargando, error, refrescar } = useForecast();
-  const grid = useGrid(data);
-  const escritorio = useMediaQuery("(min-width: 900px)");
+function VistaEscritorio({
+  grid,
+  data,
+  mode,
+  setMode,
+  refrescar,
+  onFeedback,
+}: {
+  grid: Grid;
+  data: { model: string; fetched_at: string; age_seconds: number; stale: boolean };
+  mode: ColorMode;
+  setMode: (m: ColorMode) => void;
+  refrescar: () => void;
+  onFeedback: (t: TipoFeedback) => void;
+}) {
+  const anchoDia = ESCRITORIO.celda * 12 + 2 * 11;
+  const recibido = data.fetched_at.slice(11, 16);
 
+  return (
+    <>
+      {/* Cabecera: identidad a la izquierda, leyenda en el centro, acciones
+          a la derecha. */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "20px 24px", gap: 16, borderBottom: "1px solid var(--stroke-divider)" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 2, flex: "none", whiteSpace: "nowrap" }}>
+          <div style={{ font: "600 20px/28px var(--font-family)" }}>
+            Viento · {grid.dias.length} días
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, ...secundario }}>
+            <span style={{ width: 8, height: 8, borderRadius: 999, background: data.stale ? "#EAB308" : "#22C55E" }} />
+            {data.model.toUpperCase().replace(/_/g, " ")}
+          </div>
+          <div style={{ paddingLeft: 14, ...terciario }}>
+            recibido {recibido} · hace {Math.round(data.age_seconds / 60)} min
+          </div>
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap", justifyContent: "center", flex: 1 }}>
+          <Leyenda mode={mode} />
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6, flex: "none" }}>
+          <button onClick={() => onFeedback("Mejora")} style={boton}>
+            Sugerencias
+          </button>
+          <button onClick={() => onFeedback("Nuevo spot")} style={enlace}>
+            ¿Falta un spot? Propón uno
+          </button>
+        </div>
+      </div>
+
+      <div style={{ padding: "16px 24px 8px", overflow: "auto" }}>
+        {/* Cabecera de días: nombre, ventanas y qué modelo alimenta ese día. */}
+        <div style={{ display: "flex", gap: 2, width: "max-content", marginBottom: 4 }}>
+          <div style={{ position: "sticky", left: 0, zIndex: 2, width: ESCRITORIO.spot, flex: "none", background: "var(--solid-background-base)" }} />
+          {grid.dias.map((d, di) => {
+            const n = grid.ventanasPorDia.get(d)?.length ?? 0;
+            return (
+              <div
+                key={d}
+                style={{
+                  width: anchoDia,
+                  flex: "none",
+                  marginLeft: di ? 12 : 0,
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "baseline",
+                  font: "600 14px/20px var(--font-family)",
+                  paddingBottom: 4,
+                  borderBottom: "1px solid var(--stroke-divider)",
+                }}
+              >
+                <span>
+                  {etiquetaDia(d).largo}
+                  <span style={{ fontWeight: 400, color: "var(--text-tertiary)", marginLeft: 8, fontSize: 12 }}>
+                    {n === 1 ? "1 ventana" : `${n} ventanas`}
+                  </span>
+                </span>
+                <span style={{ font: "400 11px/14px var(--font-family-mono)", color: "var(--text-tertiary)" }}>
+                  AROME
+                </span>
+              </div>
+            );
+          })}
+        </div>
+
+        <Rejilla grid={grid} dias={grid.dias} mode={mode} m={ESCRITORIO} />
+      </div>
+
+      {/* Mejores ventanas: una columna por día. */}
+      <div style={{ padding: "16px 24px 24px", borderTop: "1px solid var(--stroke-divider)" }}>
+        <div style={{ font: "600 14px/20px var(--font-family)", marginBottom: 12 }}>
+          Mejores ventanas por día
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: `repeat(${grid.dias.length}, minmax(0,1fr))`, gap: 12 }}>
+          {grid.dias.map((d) => {
+            const vs = (grid.ventanasPorDia.get(d) ?? []).slice(0, 2);
+            const desc = grid.descartadosPorDia.get(d) ?? [];
+            const calma = grid.calmaPorDia.get(d) ?? [];
+            return (
+              <div key={d} style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                <span style={{ font: "600 13px/18px var(--font-family)", color: "var(--text-secondary)" }}>
+                  {etiquetaDia(d).corto}
+                </span>
+                {vs.length === 0 ? (
+                  <span style={terciario}>Sin ventanas</span>
+                ) : (
+                  vs.map((v, i) => (
+                    <TarjetaVentana key={`${v.spotId}-${v.desde}`} v={v} n={i + 1} grid={grid} />
+                  ))
+                )}
+                {/* Por qué se descarta cada spot: vale tanto como saber dónde sí. */}
+                {desc.slice(0, 3).map((x) => (
+                  <span key={x.name} style={terciario}>
+                    {x.name}: {x.why}
+                  </span>
+                ))}
+                {calma.length > 0 && <span style={terciario}>Sin viento: {calma.join(", ")}</span>}
+              </div>
+            );
+          })}
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 20, marginTop: 16, flexWrap: "wrap" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, ...secundario }}>
+            <Rosa facing={SPOT_META.castelldefels.facing} size={20} />
+            Rosa del spot: verde lateral, ámbar frontal o side-off, rojo offshore
+          </div>
+          <button
+            onClick={() => setMode(mode === "navegabilidad" ? "velocidad" : "navegabilidad")}
+            style={enlace}
+          >
+            Colorear por: {mode}
+          </button>
+          <button onClick={refrescar} style={enlace}>
+            Actualizar
+          </button>
+        </div>
+      </div>
+    </>
+  );
+}
+
+/* ------------------------------------------------------------------ *
+ * Móvil
+ * ------------------------------------------------------------------ */
+
+function VistaMovil({
+  grid,
+  data,
+  mode,
+  setMode,
+  refrescar,
+  onFeedback,
+}: {
+  grid: Grid;
+  data: { model: string; age_seconds: number; stale: boolean };
+  mode: ColorMode;
+  setMode: (m: ColorMode) => void;
+  refrescar: () => void;
+  onFeedback: (t: TipoFeedback) => void;
+}) {
   const [sel, setSel] = useState(0);
-  const [mode, setMode] = useState<ColorMode>("navegabilidad");
   const [pick, setPick] = useState<Pick | null>(null);
-  const [fb, setFb] = useState<"Mejora" | "Nuevo spot" | null>(null);
-
-  const dia = grid?.dias.length ? grid.dias[Math.min(sel, grid.dias.length - 1)] : undefined;
-  const diasVisibles = escritorio ? (grid?.dias ?? []) : dia ? [dia] : [];
+  const dia = grid.dias[Math.min(sel, grid.dias.length - 1)];
 
   let detalle = "Toca una celda para ver el detalle de esa hora.";
-  if (pick && grid) {
+  if (pick) {
     const fila = grid.filas.find((f) => f.id === pick.spotId);
     const c = fila?.porDia.get(pick.dia)?.[pick.i];
     if (fila && c) {
@@ -237,14 +306,138 @@ export default function App() {
     }
   }
 
-  const enlace = {
-    padding: 0,
-    border: 0,
-    background: "none",
-    color: "var(--accent-text-primary)",
-    font: "600 13px/18px var(--font-family)",
-    cursor: "pointer",
-  } as const;
+  const vs = (grid.ventanasPorDia.get(dia) ?? []).slice(0, 2);
+  const desc = grid.descartadosPorDia.get(dia) ?? [];
+  const calma = grid.calmaPorDia.get(dia) ?? [];
+
+  return (
+    <>
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", padding: "16px 16px 12px", gap: 8 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          <div style={{ font: "600 20px/28px var(--font-family)" }}>Viento</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, ...secundario }}>
+            <span style={{ width: 8, height: 8, borderRadius: 999, background: data.stale ? "#EAB308" : "#22C55E" }} />
+            {data.model.toUpperCase().replace(/_/g, " ")} · hace {Math.round(data.age_seconds / 60)} min
+          </div>
+        </div>
+        <button onClick={() => onFeedback("Mejora")} style={boton}>
+          Sugerencias
+        </button>
+      </div>
+
+      <div style={{ display: "flex", gap: 4, padding: "0 12px 12px", overflowX: "auto" }}>
+        {grid.dias.map((d, i) => {
+          const n = grid.ventanasPorDia.get(d)?.length ?? 0;
+          return (
+            <button
+              key={d}
+              onClick={() => {
+                setSel(i);
+                setPick(null);
+              }}
+              style={{
+                flex: 1,
+                padding: "6px 2px",
+                borderRadius: 4,
+                cursor: "pointer",
+                border: "1px solid var(--stroke-control-default)",
+                background: i === sel ? "var(--system-accent)" : "var(--fill-control-default)",
+                color: i === sel ? "var(--text-on-accent)" : "var(--text-primary)",
+                font: "600 13px/18px var(--font-family)",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: 2,
+              }}
+            >
+              {etiquetaDia(d).corto}
+              <span style={{ font: "400 11px/14px var(--font-family)", opacity: 0.85 }}>
+                {n ? `${n} vent.` : "—"}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      <div style={{ overflow: "auto", margin: "0 6px" }}>
+        <Rejilla grid={grid} dias={[dia]} mode={mode} m={MOVIL} pick={pick} onPick={setPick} />
+      </div>
+
+      <div style={{ margin: "8px 12px 0", padding: "8px 12px", borderRadius: 4, background: "var(--fill-subtle-secondary)", font: "13px/18px var(--font-family)", color: "var(--text-secondary)" }}>
+        {detalle}
+      </div>
+
+      <div style={{ margin: "12px 12px 0", padding: 12, borderRadius: 8, background: "var(--fill-card-default)", border: "1px solid var(--stroke-control-default)", display: "flex", flexDirection: "column", gap: 10 }}>
+        <span style={secundario}>Mejores ventanas · {etiquetaDia(dia).largo}</span>
+        {vs.length === 0 ? (
+          <span style={{ font: "14px/20px var(--font-family)", color: "var(--text-tertiary)" }}>
+            Ninguna ventana navegable este día.
+          </span>
+        ) : (
+          vs.map((v, i) => <TarjetaVentana key={`${v.spotId}-${v.desde}`} v={v} n={i + 1} grid={grid} />)
+        )}
+        {desc.map((x) => (
+          <span key={x.name} style={terciario}>
+            {x.name}: {x.why}
+          </span>
+        ))}
+        {calma.length > 0 && <span style={terciario}>Sin viento: {calma.join(", ")}</span>}
+      </div>
+
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "8px 12px", padding: "12px 16px 8px" }}>
+        <Leyenda mode={mode} />
+      </div>
+
+      <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "0 16px 12px", ...secundario }}>
+        <Rosa facing={SPOT_META.castelldefels.facing} size={20} />
+        Rosa del spot: verde lateral, ámbar frontal o side-off, rojo offshore
+      </div>
+
+      <div style={{ display: "flex", alignItems: "center", gap: 16, padding: "4px 16px 24px", flexWrap: "wrap" }}>
+        <button onClick={() => onFeedback("Nuevo spot")} style={enlace}>
+          ¿Falta un spot? Propón uno
+        </button>
+        <button
+          onClick={() => setMode(mode === "navegabilidad" ? "velocidad" : "navegabilidad")}
+          style={enlace}
+        >
+          Colorear por: {mode}
+        </button>
+        <button onClick={refrescar} style={enlace}>
+          Actualizar
+        </button>
+      </div>
+    </>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+
+function Esqueleto({ m }: { m: Medidas }) {
+  return (
+    <div style={{ padding: "16px 24px" }}>
+      {[60, 48, 56, 72, 52, 64, 44, 58].map((w, r) => (
+        <div key={r} style={{ display: "flex", gap: 2, marginBottom: 2, alignItems: "center" }}>
+          <div style={{ width: m.spot, flex: "none", display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{ width: m.rosa, height: m.rosa, borderRadius: 999, background: "var(--fill-subtle-secondary)" }} />
+            <div style={{ width: w, height: 10, borderRadius: 3, background: "var(--fill-subtle-secondary)" }} />
+          </div>
+          {HOURS.map((h) => (
+            <div key={h} style={{ width: m.celda, height: m.alto, borderRadius: 3, background: "var(--fill-subtle-tertiary)" }} />
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export default function App() {
+  const { data, cargando, error, refrescar } = useForecast();
+  const grid = useGrid(data);
+  const escritorio = useMediaQuery("(min-width: 1000px)");
+
+  const [mode, setMode] = useState<ColorMode>("navegabilidad");
+  const [fb, setFb] = useState<TipoFeedback | null>(null);
 
   return (
     <div
@@ -260,87 +453,43 @@ export default function App() {
         margin: "0 auto",
       }}
     >
-      <Cabecera
-        modelo={data?.model}
-        edad={data?.age_seconds}
-        stale={data?.stale}
-        onFeedback={() => setFb("Mejora")}
-      />
-
       {error && (
-        <div style={{ margin: "0 12px 12px", padding: "8px 12px", borderRadius: 4, background: "rgba(239,68,68,.12)", font: "12px/16px var(--font-family)", color: "var(--system-critical)" }}>
+        <div style={{ margin: 12, padding: "8px 12px", borderRadius: 4, background: "rgba(239,68,68,.12)", font: "12px/16px var(--font-family)", color: "var(--system-critical)" }}>
           No se pudo contactar con el backend ({error}).
           {data ? " Se muestran los últimos datos recibidos." : ""}
         </div>
       )}
 
-      {cargando && !data && <Esqueleto />}
+      {cargando && !data && <Esqueleto m={escritorio ? ESCRITORIO : MOVIL} />}
 
-      {grid && dia && (
-        <>
-          {/* En escritorio caben los 3 días a la vez, así que las pestañas
-              solo tienen sentido en móvil. */}
-          {!escritorio && (
-            <Pestanas
-              grid={grid}
-              sel={sel}
-              onSel={(i) => {
-                setSel(i);
-                setPick(null);
-              }}
-            />
-          )}
+      {grid && data && grid.dias.length > 0 &&
+        (escritorio ? (
+          <VistaEscritorio
+            grid={grid}
+            data={data}
+            mode={mode}
+            setMode={setMode}
+            refrescar={refrescar}
+            onFeedback={setFb}
+          />
+        ) : (
+          <VistaMovil
+            grid={grid}
+            data={data}
+            mode={mode}
+            setMode={setMode}
+            refrescar={refrescar}
+            onFeedback={setFb}
+          />
+        ))}
 
-          {escritorio && (
-            <div style={{ display: "flex", gap: 2, padding: "0 6px 6px", width: "max-content" }}>
-              <div style={{ width: ANCHO_SPOT, flex: "none" }} />
-              {grid.dias.map((d, di) => (
-                <div
-                  key={d}
-                  style={{ width: 20 * 12 + 2 * 11, marginLeft: di ? 12 : 0, font: "600 12px/16px var(--font-family)" }}
-                >
-                  {etiquetaDia(d).largo}
-                  <span style={{ marginLeft: 6, fontWeight: 400, color: "var(--text-tertiary)" }}>
-                    {grid.ventanasPorDia.get(d)?.length ?? 0} ventanas
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-
-          <Rejilla grid={grid} dias={diasVisibles} mode={mode} pick={pick} onPick={setPick} />
-
-          <div style={{ margin: "8px 12px 0", padding: "8px 12px", borderRadius: 4, background: "var(--fill-subtle-secondary)", font: "13px/18px var(--font-family)", color: "var(--text-secondary)" }}>
-            {detalle}
-          </div>
-
-          <MejoresVentanas grid={grid} dia={dia} />
-
-          <Leyenda mode={mode} />
-
-          <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "0 16px 12px", ...fuente }}>
-            <Rosa facing={SPOT_META.castelldefels.facing} size={20} />
-            Rosa del spot: verde lateral, ámbar frontal o side-off, rojo offshore
-          </div>
-
-          <div style={{ display: "flex", alignItems: "center", gap: 16, padding: "4px 16px 24px", flexWrap: "wrap" }}>
-            <button onClick={() => setFb("Nuevo spot")} style={enlace}>
-              ¿Falta un spot? Propón uno
-            </button>
-            <button
-              onClick={() => setMode(mode === "navegabilidad" ? "velocidad" : "navegabilidad")}
-              style={enlace}
-            >
-              Colorear por: {mode}
-            </button>
-            <button onClick={refrescar} style={enlace}>
-              Actualizar
-            </button>
-          </div>
-        </>
+      {fb && (
+        <Feedback
+          tipoInicial={fb}
+          variante={escritorio ? "cajon" : "hoja"}
+          onClose={() => setFb(null)}
+        />
       )}
-
-      {fb && <Feedback tipoInicial={fb} onClose={() => setFb(null)} />}
     </div>
   );
 }
