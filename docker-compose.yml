@@ -1,0 +1,21 @@
+services:
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: kite
+      POSTGRES_PASSWORD: kite
+      POSTGRES_DB: kitesurf
+    ports:
+      # 5433 en el host para no chocar con un Postgres local u otro proyecto.
+      - "5433:5432"
+    volumes:
+      # Volumen con nombre, NO un bind mount: montar los datos de Postgres sobre
+      # el sistema de ficheros de Windows da problemas de permisos y de fsync.
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kite -d kitesurf"]
+      interval: 5s
+      retries: 10
+
+volumes:
+  pgdata: {}

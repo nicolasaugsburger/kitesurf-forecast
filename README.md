@@ -12,6 +12,10 @@ poder comparar directamente contra Windguru.
 ```bash
 python -m venv venv && venv/Scripts/activate   # Windows
 pip install -r requirements.txt
+
+docker compose up -d          # Postgres en el puerto 5433
+alembic upgrade head          # esquema + los 8 spots
+
 uvicorn app.main:app --reload
 ```
 
@@ -52,7 +56,22 @@ pytest
 Open-Meteo se falsea con `httpx.MockTransport`, por debajo del cliente, para que
 el código recorra su camino real (reintentos incluidos).
 
+## Base de datos
+
+Tres tablas, y la división entre ellas separa dos requisitos que es fácil
+confundir:
+
+- `forecast_runs` -> "¿cuándo pedí los datos por última vez?" = **caché**
+- `forecast_hours` -> "¿cómo cambió el pronóstico de esta hora?" = **histórico**
+
+La clave primaria de `forecast_hours` es `(run_id, spot_id, valid_time)`. Un
+`UNIQUE (spot_id, valid_time)` sería el diseño "guarda solo el último" e
+impediría el histórico por construcción: por eso no está.
+
+La primera migración está escrita a mano, no autogenerada, para que se vea
+exactamente qué SQL existe.
+
 ## Estado
 
-Fase 1 (API sobre Open-Meteo) completa. Siguiente: persistencia en Postgres para
-cachear entre arranques y acumular histórico de pronósticos.
+Fase 1 (API sobre Open-Meteo) completa. Esquema de Postgres creado y sembrado;
+la app todavía no lee ni escribe en él. Siguiente: persistir cada pasada.

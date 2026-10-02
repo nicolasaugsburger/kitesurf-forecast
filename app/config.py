@@ -29,6 +29,9 @@ class Settings(BaseSettings):
     # el dato sin depender de adivinar cuándo aterriza cada pasada.
     cache_ttl_minutes: int = 30
 
+    # El puerto 5433 en el host evita chocar con un Postgres local.
+    database_url: str = "postgresql+asyncpg://kite:kite@localhost:5433/kitesurf"
+
     display_timezone: str = "Europe/Madrid"
     user_agent: str = "kitesurf-forecast/0.1 (proyecto personal)"
     http_connect_timeout: float = 5.0
