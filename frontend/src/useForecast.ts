@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 
 import { fetchForecast, forceRefresh, type ForecastResponse } from "./api";
+import { demoForecast, USAR_DEMO } from "./demoData";
 
 type Estado = {
   data: ForecastResponse | null;
@@ -18,6 +19,11 @@ export function useForecast() {
   });
 
   const cargar = useCallback(async (signal?: AbortSignal) => {
+    // TEMPORAL: datos de prueba para revisar la escala de color completa.
+    if (USAR_DEMO) {
+      setEstado({ data: demoForecast(), cargando: false, error: null, refrescando: false });
+      return;
+    }
     try {
       const data = await fetchForecast(signal);
       setEstado((e) => ({ ...e, data, cargando: false, error: null, refrescando: false }));

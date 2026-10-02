@@ -32,7 +32,7 @@ export type Classified = {
  *
  * Colores medidos, no elegidos a ojo, contra el fondo #202020:
  *   - separación entre bandas contiguas: ΔE 14.5 en protanopia (el objetivo
- *     es 8) y 20.7 en visión normal
+ *     es 8) y 16.7 en visión normal
  *   - todas por encima de 3:1 contra el fondo
  *   - el número de cada celda por encima de 4.8:1 sobre su banda
  * ------------------------------------------------------------------ */
@@ -51,8 +51,8 @@ const TINTA = "#0A1A0F";
 const BLANCO = "#FFFFFF";
 
 export const BANDAS: Banda[] = [
-  { min: 0, max: 10, label: "0–10", bg: "#DFF7E8", fg: TINTA },
-  { min: 10, max: 15, label: "10–15", bg: "#5CC183", fg: TINTA },
+  { min: 0, max: 10, label: "0–10", bg: "#B4EACB", fg: TINTA },
+  { min: 10, max: 15, label: "10–15", bg: "#4FB477", fg: TINTA },
   { min: 15, max: 20, label: "15–20", bg: "#15803D", fg: BLANCO },
   { min: 20, max: 25, label: "20–25", bg: "#FB923C", fg: TINTA },
   { min: 25, max: 35, label: "25–35", bg: "#DC2626", fg: BLANCO },
@@ -64,21 +64,17 @@ export function bandaDe(kn: number): number {
   return i === -1 ? BANDAS.length - 1 : i;
 }
 
-/**
- * El offshore no es "menos viento": es no entrar al agua.
+/*
+ * El offshore ya NO se pinta distinto.
  *
- * Ya no puede ir en rojo, porque el rojo es ahora la banda de 25-35 nudos. Se
- * marca atenuando la celda y rodeándola, que además la distingue de las demás
- * por forma y no solo por color.
+ * La rosa del spot y la flecha de cada celda ya dicen de dónde sopla, así que
+ * marcarlo aparte repetía información. Se sigue calculando porque las
+ * "mejores ventanas" lo excluyen: recomendar como mejor opción una hora que
+ * te empuja mar adentro sería peligroso, y esa es la única valoración de
+ * seguridad que queda en la aplicación.
  */
-export const OFFSHORE_STYLE = {
-  bg: "rgba(120,120,120,.18)",
-  fg: "var(--text-tertiary)",
-  ring: "inset 0 0 0 1.5px #F87171",
-};
 
 export function styleOf(c: Classified) {
-  if (c.offshore) return OFFSHORE_STYLE;
   const b = BANDAS[c.band];
   return { bg: b.bg, fg: b.fg, ring: "none" };
 }

@@ -101,10 +101,10 @@ describe("el color dice cuánto viento hay, no si se puede navegar", () => {
     expect(styleOf(lateral).bg).toBe(styleOf(frontal).bg);
   });
 
-  it("el offshore con viento de verdad rompe la escala: es seguridad", () => {
+  it("el offshore tampoco cambia el color: se deduce de la rosa y la flecha", () => {
     const c = classify("castelldefels", 20, 23, OFFSHORE)!;
     expect(c.offshore).toBe(true);
-    expect(styleOf(c).bg).not.toBe(BANDAS[c.band].bg);
+    expect(styleOf(c).bg).toBe(BANDAS[c.band].bg);
   });
 
   it("el offshore flojo no se marca como peligroso", () => {

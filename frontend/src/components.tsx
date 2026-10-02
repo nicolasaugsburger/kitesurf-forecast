@@ -197,18 +197,6 @@ export function Leyenda() {
           {b.label}
         </div>
       ))}
-      <div style={estilo}>
-        <span
-          style={{
-            width: 12,
-            height: 12,
-            borderRadius: 3,
-            background: "rgba(239,68,68,.16)",
-            boxShadow: "inset 0 0 0 1px rgba(239,68,68,.7)",
-          }}
-        />
-        Offshore
-      </div>
       {[
         { bg: "#EAB308", label: "Rachas +6–10" },
         { bg: "#EF4444", label: "Rachas >+10" },
