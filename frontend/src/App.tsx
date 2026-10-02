@@ -14,7 +14,7 @@ import {
   type Medidas,
 } from "./components";
 import { Feedback, type TipoFeedback } from "./Feedback";
-import type { ColorMode, Ventana } from "./domain";
+import type { Ventana } from "./domain";
 import { CMP_LONG, HOURS } from "./spots";
 import { etiquetaDia, useGrid, type Grid } from "./useGrid";
 import { useForecast } from "./useForecast";
@@ -52,7 +52,6 @@ const boton = {
 function Rejilla({
   grid,
   dias,
-  mode,
   m,
   flexible,
   pick,
@@ -60,7 +59,6 @@ function Rejilla({
 }: {
   grid: Grid;
   dias: string[];
-  mode: ColorMode;
   m: Medidas;
   /** Escritorio: las columnas crecen para llenar el ancho disponible. */
   flexible: boolean;
@@ -110,7 +108,7 @@ function Rejilla({
                 <Hueco key={i} m={m} flexible={flexible}>
                   <Celda
                     c={c}
-                    mode={mode}
+                   
                     m={m}
                     seleccionada={!!pick && pick.spotId === f.id && pick.dia === d && pick.i === i}
                     onClick={onPick ? () => onPick({ spotId: f.id, dia: d, i }) : undefined}
@@ -200,12 +198,10 @@ function TarjetaVentana({ v, n, grid }: { v: Ventana; n: number; grid: Grid }) {
 function VistaEscritorio({
   grid,
   data,
-  mode,
   onFeedback,
 }: {
   grid: Grid;
   data: { model: string; fetched_at: string; age_seconds: number; stale: boolean };
-  mode: ColorMode;
   onFeedback: (t: TipoFeedback) => void;
 }) {
   const recibido = data.fetched_at.slice(11, 16);
@@ -229,7 +225,7 @@ function VistaEscritorio({
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap", justifyContent: "center", flex: 1 }}>
-          <Leyenda mode={mode} />
+          <Leyenda />
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6, flex: "none" }}>
@@ -284,7 +280,7 @@ function VistaEscritorio({
             })}
           </div>
 
-          <Rejilla grid={grid} dias={grid.dias} mode={mode} m={ESCRITORIO} flexible />
+          <Rejilla grid={grid} dias={grid.dias} m={ESCRITORIO} flexible />
         </div>
 
         {/* Mejores ventanas: una columna por día, alineada con la rejilla. */}
@@ -349,12 +345,10 @@ function VistaEscritorio({
 function VistaMovil({
   grid,
   data,
-  mode,
   onFeedback,
 }: {
   grid: Grid;
   data: { model: string; age_seconds: number; stale: boolean };
-  mode: ColorMode;
   onFeedback: (t: TipoFeedback) => void;
 }) {
   const [sel, setSel] = useState(0);
@@ -424,7 +418,7 @@ function VistaMovil({
       </div>
 
       <div style={{ overflow: "auto", margin: "0 6px" }}>
-        <Rejilla grid={grid} dias={[dia]} mode={mode} m={MOVIL} flexible={false} pick={pick} onPick={setPick} />
+        <Rejilla grid={grid} dias={[dia]} m={MOVIL} flexible={false} pick={pick} onPick={setPick} />
       </div>
 
       <div style={{ margin: "8px 12px 0", padding: "8px 12px", borderRadius: 4, background: "var(--fill-subtle-secondary)", font: "13px/18px var(--font-family)", color: "var(--text-secondary)" }}>
@@ -449,7 +443,7 @@ function VistaMovil({
       </div>
 
       <div style={{ display: "flex", flexWrap: "wrap", gap: "8px 12px", padding: "12px 16px 8px" }}>
-        <Leyenda mode={mode} />
+        <Leyenda />
       </div>
 
       <div style={{ display: "flex", alignItems: "center", gap: 16, padding: "4px 16px 24px", flexWrap: "wrap" }}>
@@ -486,8 +480,6 @@ export default function App() {
   const grid = useGrid(data);
   const escritorio = useMediaQuery("(min-width: 1000px)");
 
-  // Sin control para cambiarlo: el diseño colorea siempre por navegabilidad.
-  const mode: ColorMode = "navegabilidad";
   const [fb, setFb] = useState<TipoFeedback | null>(null);
 
   return (
@@ -518,14 +510,14 @@ export default function App() {
           <VistaEscritorio
             grid={grid}
             data={data}
-            mode={mode}
+           
             onFeedback={setFb}
           />
         ) : (
           <VistaMovil
             grid={grid}
             data={data}
-            mode={mode}
+           
             onFeedback={setFb}
           />
         ))}

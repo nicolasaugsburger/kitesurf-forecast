@@ -1,9 +1,10 @@
 /**
- * Reglas de navegabilidad. Portado tal cual del diseño.
+ * Reglas de dominio del comparador.
  *
- * OJO: esto es lógica de dominio viviendo en el front. Está aislada aquí a
- * propósito para que mudarla al backend sea mover un fichero, no reescribir
- * la aplicación. Ver la nota al final sobre dónde debería vivir.
+ * Nota de criterio: el color de las celdas NO juzga si una hora es navegable.
+ * Eso depende del tamaño de cometa, de la tabla y del rider, así que el color
+ * dice únicamente cuánto viento hay y cada uno decide. Lo único que sí se
+ * marca es el offshore, porque es seguridad y no depende del equipo.
  */
 import { CMP_SHORT, SPOT_META } from "./spots";
 
@@ -15,11 +16,83 @@ export type Classified = {
   delta: number;
   dir: number;
   dirClass: DirClass;
-  /** 0 = no navegable, 3 = ideal */
-  level: 0 | 1 | 2 | 3;
+  /** Índice en BANDAS (0 = menos de 10 kn). */
+  band: number;
   offshore: boolean;
   compass: string;
 };
+
+/* ------------------------------------------------------------------ *
+ * Bandas de velocidad
+ *
+ * Escala verde -> naranja -> rojo -> violeta, la convención que usan Windguru
+ * y Windy: no es una rampa de un solo tono, pero es el lenguaje que ya conoce
+ * cualquiera que mire pronósticos de viento, y eso pesa más que la regla
+ * genérica de "magnitud = un tono".
+ *
+ * Colores medidos, no elegidos a ojo, contra el fondo #202020:
+ *   - separación entre bandas contiguas: ΔE 14.5 en protanopia (el objetivo
+ *     es 8) y 20.7 en visión normal
+ *   - todas por encima de 3:1 contra el fondo
+ *   - el número de cada celda por encima de 4.8:1 sobre su banda
+ * ------------------------------------------------------------------ */
+
+export type Banda = {
+  /** Desde (incluido) */
+  min: number;
+  /** Hasta (excluido); Infinity en la última. */
+  max: number;
+  label: string;
+  bg: string;
+  fg: string;
+};
+
+const TINTA = "#0A1A0F";
+const BLANCO = "#FFFFFF";
+
+export const BANDAS: Banda[] = [
+  { min: 0, max: 10, label: "0–10", bg: "#DFF7E8", fg: TINTA },
+  { min: 10, max: 15, label: "10–15", bg: "#5CC183", fg: TINTA },
+  { min: 15, max: 20, label: "15–20", bg: "#15803D", fg: BLANCO },
+  { min: 20, max: 25, label: "20–25", bg: "#FB923C", fg: TINTA },
+  { min: 25, max: 35, label: "25–35", bg: "#DC2626", fg: BLANCO },
+  { min: 35, max: Infinity, label: ">35", bg: "#A78BFA", fg: TINTA },
+];
+
+export function bandaDe(kn: number): number {
+  const i = BANDAS.findIndex((b) => kn < b.max);
+  return i === -1 ? BANDAS.length - 1 : i;
+}
+
+/**
+ * El offshore no es "menos viento": es no entrar al agua.
+ *
+ * Ya no puede ir en rojo, porque el rojo es ahora la banda de 25-35 nudos. Se
+ * marca atenuando la celda y rodeándola, que además la distingue de las demás
+ * por forma y no solo por color.
+ */
+export const OFFSHORE_STYLE = {
+  bg: "rgba(120,120,120,.18)",
+  fg: "var(--text-tertiary)",
+  ring: "inset 0 0 0 1.5px #F87171",
+};
+
+export function styleOf(c: Classified) {
+  if (c.offshore) return OFFSHORE_STYLE;
+  const b = BANDAS[c.band];
+  return { bg: b.bg, fg: b.fg, ring: "none" };
+}
+
+/** Color de la barrita de racheo: lo que molesta es la distancia con la media. */
+export function gustBarColor(delta: number): string {
+  if (delta > 10) return "#EF4444";
+  if (delta > 6) return "#EAB308";
+  return "transparent";
+}
+
+/* ------------------------------------------------------------------ *
+ * Dirección
+ * ------------------------------------------------------------------ */
 
 /** Diferencia angular (0-180) entre dos rumbos. */
 export function angularDiff(a: number, b: number): number {
@@ -45,57 +118,24 @@ export function classify(
   if (!meta) return null;
 
   const dirClass = classifyDirection(dir, meta.facing);
-  const delta = gust - kn;
-
-  // Bandas de velocidad: 15-25 kn es lo ideal; por encima de 32 deja de serlo.
-  let level: number;
-  if (kn < 10) level = 0;
-  else if (kn < 15) level = 1;
-  else if (kn <= 25) level = 3;
-  else if (kn <= 32) level = 2;
-  else level = 0;
-
-  if (level > 0) {
-    // Viento rachado: lo que molesta no es la racha, sino su distancia con la
-    // media. Mucha diferencia = sesión incómoda aunque la media sea perfecta.
-    if (delta > 10) level -= 2;
-    else if (delta > 6) level -= 1;
-    if (dirClass === "frontal" || dirClass === "side-off") level -= 1;
-  }
-
-  // Offshore con viento de verdad: te empuja mar adentro. No es "peor", es NO.
-  const offshore = dirClass === "offshore" && kn >= 10;
 
   return {
     kn,
     gust,
-    delta,
+    delta: gust - kn,
     dir,
     dirClass,
-    level: (offshore ? 0 : Math.max(0, level)) as 0 | 1 | 2 | 3,
-    offshore,
+    band: bandaDe(kn),
+    // Offshore con viento de verdad: te empuja mar adentro. No es "peor", es NO.
+    offshore: dirClass === "offshore" && kn >= 10,
     compass: CMP_SHORT[Math.round(dir / 22.5) % 16],
   };
 }
 
-/** Colores por nivel de navegabilidad. */
-export const LEVEL_STYLE: Record<number, { bg: string; fg: string; ring: string }> = {
-  0: { bg: "rgba(255,255,255,.04)", fg: "rgba(255,255,255,.35)", ring: "none" },
-  1: { bg: "rgba(34,197,94,.20)", fg: "rgba(255,255,255,.75)", ring: "none" },
-  2: { bg: "rgba(34,197,94,.50)", fg: "rgba(255,255,255,.95)", ring: "none" },
-  3: { bg: "#22C55E", fg: "#052E16", ring: "none" },
-};
-
-export const OFFSHORE_STYLE = {
-  bg: "rgba(239,68,68,.16)",
-  fg: "#F87171",
-  ring: "inset 0 0 0 1px rgba(239,68,68,.7)",
-};
-
 /* ------------------------------------------------------------------ *
- * Rosa de los vientos del spot: un anillo de 16 sectores coloreados
- * según cómo quede el viento de ESA dirección respecto a la playa.
+ * Rosa de los vientos del spot
  * ------------------------------------------------------------------ */
+
 export function roseOf(facing: number): string {
   const col: Record<DirClass, string> = {
     lateral: "#22C55E",
@@ -114,38 +154,24 @@ export function roseOf(facing: number): string {
   return `conic-gradient(from -11.25deg, ${partes.join(", ")})`;
 }
 
-/** Coloreado alternativo: por velocidad bruta en vez de por navegabilidad. */
-export type ColorMode = "navegabilidad" | "velocidad";
-
-export function styleOf(c: Classified, mode: ColorMode) {
-  if (c.offshore) return OFFSHORE_STYLE;
-  if (mode === "velocidad") {
-    const k = c.kn;
-    if (k < 10) return LEVEL_STYLE[0];
-    if (k < 15) return LEVEL_STYLE[1];
-    if (k <= 25) return LEVEL_STYLE[3];
-    if (k <= 32) return { bg: "#FACC15", fg: "#713F12", ring: "none" };
-    return { bg: "#EF4444", fg: "#FFFFFF", ring: "none" };
-  }
-  return LEVEL_STYLE[c.level];
-}
-
-/** Color de la barrita de racheo: lo que molesta es la distancia con la media. */
-export function gustBarColor(delta: number): string {
-  if (delta > 10) return "#EF4444";
-  if (delta > 6) return "#EAB308";
-  return "transparent";
-}
-
 /* ------------------------------------------------------------------ *
- * Ventanas navegables: tramos seguidos de al menos 2 h con nivel >= 2.
+ * Ventanas
+ *
+ * "Mejores ventanas" necesita por fuerza un umbral, y es el único juicio que
+ * queda en la aplicación. Se deja explícito y en un solo sitio: 15 nudos, que
+ * es donde empieza la tercera banda de color. Así el umbral es visible en la
+ * pantalla, no una constante escondida.
  * ------------------------------------------------------------------ */
+
+export const UMBRAL_VENTANA_KN = 15;
+
 export type Ventana = {
   spotId: string;
   dia: string;
   desde: number;
   hasta: number;
   horas: number;
+  /** Viento medio de la ventana, en nudos. */
   media: number;
   celdas: Classified[];
   /** Penaliza la distancia: una ventana lejos vale menos que una cerca. */
@@ -165,12 +191,13 @@ export function windowsOf(
   let ini = -1;
   for (let i = 0; i <= celdas.length; i++) {
     const c = i < celdas.length ? celdas[i] : null;
-    const ok = c != null && c.level >= 2;
+    // El offshore queda fuera por seguridad, no por preferencia.
+    const ok = c != null && c.kn >= UMBRAL_VENTANA_KN && !c.offshore;
     if (ok && ini < 0) ini = i;
     if (!ok && ini >= 0) {
       if (i - ini >= 2) {
         const hs = celdas.slice(ini, i).filter((x): x is Classified => x != null);
-        const media = hs.reduce((a, c) => a + c.level, 0) / hs.length;
+        const media = hs.reduce((a, c) => a + c.kn, 0) / hs.length;
         const horas = i - ini;
         out.push({
           spotId,
@@ -180,8 +207,10 @@ export function windowsOf(
           horas,
           media,
           celdas: hs,
-          score: horas * media - (driveMin / 60) * 1.5,
-          compensa: !far || (horas >= 4 && media >= 2.5),
+          // El viento se normaliza con el umbral para que la puntuación no
+          // dependa de la escala absoluta de nudos.
+          score: horas * (media / UMBRAL_VENTANA_KN) - (driveMin / 60) * 1.5,
+          compensa: !far || (horas >= 4 && media >= 18),
         });
       }
       ini = -1;
@@ -189,10 +218,3 @@ export function windowsOf(
   }
   return out;
 }
-
-/** Franjas del día, para la vista resumida. */
-export const BANDS: Array<[number, number, string, string]> = [
-  [0, 4, "Mañana", "8–11"],
-  [4, 8, "Mediodía", "12–15"],
-  [8, 12, "Tarde", "16–19"],
-];

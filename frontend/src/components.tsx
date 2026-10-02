@@ -1,13 +1,7 @@
 /** Piezas visuales del diseño. Los colores salen de tokens.css (011h × WPF-UI). */
 import type { CSSProperties } from "react";
 
-import {
-  gustBarColor,
-  roseOf,
-  styleOf,
-  type Classified,
-  type ColorMode,
-} from "./domain";
+import { BANDAS, gustBarColor, roseOf, styleOf, type Classified } from "./domain";
 import { CMP_LONG } from "./spots";
 
 /* Las dos maquetas usan medidas distintas, así que van como constantes y no
@@ -62,14 +56,12 @@ export function Flecha({ dir, size = 6 }: { dir: number; size?: number }) {
 
 export function Celda({
   c,
-  mode,
   m,
   seleccionada,
   onClick,
   ml,
 }: {
   c: Classified | null;
-  mode: ColorMode;
   m: Medidas;
   seleccionada?: boolean;
   onClick?: () => void;
@@ -85,7 +77,7 @@ export function Celda({
   if (!c) {
     return <div style={{ ...base, background: "var(--fill-subtle-tertiary)" }} />;
   }
-  const s = styleOf(c, mode);
+  const s = styleOf(c);
   return (
     <div
       onClick={onClick}
@@ -188,32 +180,8 @@ export function EtiquetaSpot({
   );
 }
 
-export function itemsLeyenda(mode: ColorMode) {
-  return mode === "velocidad"
-    ? [
-        { bg: "var(--fill-subtle-secondary)", ring: "none", label: "<10 kn" },
-        { bg: "rgba(34,197,94,.20)", ring: "none", label: "10–14" },
-        { bg: "#22C55E", ring: "none", label: "15–25" },
-        { bg: "#FACC15", ring: "none", label: "25–32" },
-        { bg: "#EF4444", ring: "none", label: ">32" },
-        { bg: "rgba(239,68,68,.16)", ring: "inset 0 0 0 1px rgba(239,68,68,.7)", label: "Offshore" },
-      ]
-    : [
-        { bg: "#22C55E", ring: "none", label: "Ideal" },
-        { bg: "rgba(34,197,94,.50)", ring: "none", label: "Navegable" },
-        { bg: "rgba(34,197,94,.20)", ring: "none", label: "Marginal" },
-        { bg: "var(--fill-subtle-secondary)", ring: "none", label: "No" },
-        { bg: "rgba(239,68,68,.16)", ring: "inset 0 0 0 1px rgba(239,68,68,.7)", label: "Offshore" },
-      ];
-}
-
-const LEYENDA_RACHAS = [
-  { bg: "#EAB308", label: "Rachas +6–10" },
-  { bg: "#EF4444", label: "Rachas >+10" },
-];
-
-/** Leyenda en línea. En escritorio va centrada en la cabecera. */
-export function Leyenda({ mode }: { mode: ColorMode }) {
+/** Leyenda: las bandas de velocidad y el aviso de offshore. */
+export function Leyenda() {
   const estilo = {
     display: "flex",
     alignItems: "center",
@@ -223,13 +191,28 @@ export function Leyenda({ mode }: { mode: ColorMode }) {
   } as const;
   return (
     <>
-      {itemsLeyenda(mode).map((lg) => (
-        <div key={lg.label} style={estilo}>
-          <span style={{ width: 12, height: 12, borderRadius: 3, background: lg.bg, boxShadow: lg.ring }} />
-          {lg.label}
+      {BANDAS.map((b) => (
+        <div key={b.label} style={estilo}>
+          <span style={{ width: 12, height: 12, borderRadius: 3, background: b.bg }} />
+          {b.label}
         </div>
       ))}
-      {LEYENDA_RACHAS.map((lg) => (
+      <div style={estilo}>
+        <span
+          style={{
+            width: 12,
+            height: 12,
+            borderRadius: 3,
+            background: "rgba(239,68,68,.16)",
+            boxShadow: "inset 0 0 0 1px rgba(239,68,68,.7)",
+          }}
+        />
+        Offshore
+      </div>
+      {[
+        { bg: "#EAB308", label: "Rachas +6–10" },
+        { bg: "#EF4444", label: "Rachas >+10" },
+      ].map((lg) => (
         <div key={lg.label} style={estilo}>
           <span style={{ width: 12, height: 3, borderRadius: 1, background: lg.bg }} />
           {lg.label}
@@ -237,6 +220,39 @@ export function Leyenda({ mode }: { mode: ColorMode }) {
       ))}
     </>
   );
+}
+
+/* ------------------------------------------------------------------ *
+ * Estructura compartida por la rejilla y el bloque de mejores ventanas.
+ * Viven aquí para que no puedan desalinearse: si una cambia, cambian las dos.
+ * ------------------------------------------------------------------ */
+
+export function filaAlineada(m: Medidas, dias: number, flexible: boolean) {
+  return {
+    display: "flex",
+    gap: 2,
+    width: flexible ? "100%" : "max-content",
+    minWidth: flexible ? anchoMinimo(m, dias) : undefined,
+  } as const;
+}
+
+export function bloqueDia(m: Medidas, di: number, flexible: boolean) {
+  return {
+    ...(flexible ? { flex: "1 1 0", minWidth: m.celda * 12 + 2 * 11 } : { }),
+    marginLeft: di > 0 ? 12 : undefined,
+  } as const;
+}
+
+/** Hueco de la columna de spots: lo que empuja los días a su sitio. */
+export function columnaSpot(m: Medidas) {
+  return {
+    position: "sticky",
+    left: 0,
+    zIndex: 2,
+    width: m.spot,
+    flex: "none",
+    background: "var(--solid-background-base)",
+  } as const;
 }
 
 /**
@@ -274,37 +290,4 @@ export function Hueco({
 export function anchoMinimo(m: Medidas, dias: number): number {
   const dia = m.celda * 12 + 2 * 11;
   return m.spot + dias * dia + (dias - 1) * 12 + dias * 2;
-}
-
-/* ------------------------------------------------------------------ *
- * Estructura compartida por la rejilla y el bloque de mejores ventanas.
- * Viven aquí para que no puedan desalinearse: si una cambia, cambian las dos.
- * ------------------------------------------------------------------ */
-
-export function filaAlineada(m: Medidas, dias: number, flexible: boolean) {
-  return {
-    display: "flex",
-    gap: 2,
-    width: flexible ? "100%" : "max-content",
-    minWidth: flexible ? anchoMinimo(m, dias) : undefined,
-  } as const;
-}
-
-export function bloqueDia(m: Medidas, di: number, flexible: boolean) {
-  return {
-    ...(flexible ? { flex: "1 1 0", minWidth: m.celda * 12 + 2 * 11 } : { }),
-    marginLeft: di > 0 ? 12 : undefined,
-  } as const;
-}
-
-/** Hueco de la columna de spots: lo que empuja los días a su sitio. */
-export function columnaSpot(m: Medidas) {
-  return {
-    position: "sticky",
-    left: 0,
-    zIndex: 2,
-    width: m.spot,
-    flex: "none",
-    background: "var(--solid-background-base)",
-  } as const;
 }
