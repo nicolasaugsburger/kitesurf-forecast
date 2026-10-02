@@ -310,7 +310,9 @@ function VistaEscritorio({
               const compensan = todas.filter((v) => v.compensa);
               // Si ninguna compensa, se enseñan igualmente las que hay: un
               // "Sin ventanas" que oculta que hubo 24 nudos informa mal.
-              const mostrar = (compensan.length ? compensan : todas).slice(0, 2);
+              // Se muestran TODAS: la cabecera dice cuántas hay y cortar la
+              // lista en dos hacía que la pantalla se contradijera.
+              const mostrar = compensan.length ? compensan : todas;
               return (
                 <div
                   key={d}
@@ -319,6 +321,10 @@ function VistaEscritorio({
                     display: "flex",
                     flexDirection: "column",
                     gap: 6,
+                    // Dos tarjetas y media: el corte a media tarjeta es lo que
+                    // avisa de que abajo hay más.
+                    maxHeight: ALTO_TARJETA * 2 + 6 + 46,
+                    overflowY: "auto",
                   }}
                 >
                   {mostrar.length === 0 ? (

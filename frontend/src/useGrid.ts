@@ -14,12 +14,15 @@ export const horaDe = (h: HourOut) => Number(h.valid_time_local.slice(11, 13));
 
 const DOW = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
 const DOW_L = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
-const MESES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+const MESES = [
+  "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+  "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre",
+];
 
 export function etiquetaDia(iso: string) {
   const [a, m, d] = iso.split("-").map(Number);
   const dow = new Date(Date.UTC(a, m - 1, d)).getUTCDay();
-  return { corto: `${DOW[dow]} ${d}`, largo: `${DOW_L[dow]} ${d} ${MESES[m - 1]}` };
+  return { corto: `${DOW[dow]} ${d}`, largo: `${DOW_L[dow]} ${d} de ${MESES[m - 1]}` };
 }
 
 export type FilaSpot = {
