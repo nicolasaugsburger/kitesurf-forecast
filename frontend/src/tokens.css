@@ -1,0 +1,648 @@
+/* ============================================================
+   011h × WPF UI — Fluent Design Tokens (Web port)
+   Foundation: lepoco/wpfui Light.xaml / Dark.xaml + Fluent rules.
+   Brand layer: 011h palette (Primary Green, Secondary Blue, Yellow,
+   Green, Red, Gray) and 011h logo color (#3A6739, "deep forest").
+   ============================================================
+
+   FONTS — Plus Jakarta Sans and DM Mono are loaded via <link> tags in
+   each consuming HTML page (see preview/_shared.html and the gallery
+   index). Loading them here via @import would block CSS parsing in
+   sandboxed iframes that can't reach Google Fonts. The fallback stack
+   below ensures pages render correctly even if the brand fonts are
+   blocked or slow to arrive.
+   ============================================================ */
+
+/* ----- Icon fonts (local, always available) ----- */
+
+
+
+/* ----- Brand text fonts -----
+   Plus Jakarta Sans (UI) + DM Mono (code) — PrimaryFontFamily /
+   SecondaryFontFamily from the app's SharedStyles.xaml. Served from the
+   Fontsource jsDelivr CDN, non-blocking (font-display: swap). */
+
+
+
+:root {
+  /* ============================================================
+     011h BRAND PALETTE (verbatim from the supplied swatch sheets)
+     ============================================================ */
+
+  /* Primary Green — the load-bearing brand color */
+  --011-pg-50:  #F7FEF9;
+  --011-pg-100: #F0FDF4;
+  --011-pg-200: #DCFCE7;
+  --011-pg-300: #BBF7D0;
+  --011-pg-400: #86EFAC;
+  --011-pg-500: #4CE484;
+  --011-pg-600: #4ADE80;
+  --011-pg-700: #22C55E;
+  --011-pg-800: #16A34A;
+  --011-pg-900: #116932;
+  --011-pg-950: #124A28;
+
+  /* Secondary Blue — neutrals + cool accent */
+  --011-sb-50:  #FFFFFF;
+  --011-sb-100: #EBEEF0;
+  --011-sb-200: #EBEEF0;
+  --011-sb-300: #D8E0E7;
+  --011-sb-400: #C5D0DB;
+  --011-sb-500: #8BA1B7;
+  --011-sb-600: #64819F;
+  --011-sb-700: #3E628A;
+  --011-sb-800: #314E6B;
+  --011-sb-900: #253A51;
+  --011-sb-950: #27272A;
+
+  /* Yellow */
+  --011-yl-50:  #FFFDF3;
+  --011-yl-100: #FEF9C3;
+  --011-yl-200: #FEF08A;
+  --011-yl-300: #FDE047;
+  --011-yl-400: #FACC15;
+  --011-yl-500: #FACC15;
+  --011-yl-600: #EAB308;
+  --011-yl-700: #CA8A04;
+  --011-yl-800: #A16207;
+  --011-yl-900: #854D0E;
+  --011-yl-950: #713F12;
+
+  /* Green (semantic success) */
+  --011-gr-50:  #F0FDF4;
+  --011-gr-100: #DCFCE7;
+  --011-gr-200: #BBF7D0;
+  --011-gr-300: #86EFAC;
+  --011-gr-400: #4ADE80;
+  --011-gr-500: #22C55E;
+  --011-gr-600: #16A34A;
+  --011-gr-700: #15803D;
+  --011-gr-800: #166534;
+  --011-gr-900: #14532D;
+  --011-gr-950: #052E16;
+
+  /* Red (semantic critical) */
+  --011-rd-50:  #FFF9F9;
+  --011-rd-100: #FEE2E2;
+  --011-rd-200: #FECACA;
+  --011-rd-300: #FCA5A5;
+  --011-rd-400: #F87171;
+  --011-rd-500: #EF4444;
+  --011-rd-600: #DC2626;
+  --011-rd-700: #B91C1C;
+  --011-rd-800: #991B1B;
+  --011-rd-900: #7F1D1D;
+  --011-rd-950: #1F0808;
+
+  /* Gray (neutral / Zinc) */
+  --011-gy-50:  #FAFAFA;
+  --011-gy-100: #F4F4F5;
+  --011-gy-200: #E4E4E7;
+  --011-gy-300: #D4D4D8;
+  --011-gy-400: #A1A1AA;
+  --011-gy-500: #71717A;
+  --011-gy-600: #52525B;
+  --011-gy-700: #3F3F46;
+  --011-gy-800: #27272A;
+  --011-gy-900: #18181B;
+  --011-gy-950: #09090B;
+
+  /* Logo color — deep forest, the wordmark / institutional mark */
+  --011-logo:   #3A6739;
+
+  /* ============================================================
+     ACCENT MAPPING — 011h replaces Fluent's Windows-blue accent
+     with Primary Green. Three accent variants per theme follow
+     WPF UI's ApplicationAccentColorManager rules:
+       Light: Primary = base −10 brightness, Secondary = −25, Tertiary = −40
+       Dark:  Primary = +17 brightness, Secondary = +17 −45 sat, Tertiary = +17 −65 sat
+     The values below are the 011h equivalents picked from the
+     Primary Green ramp, with the same step relationships.
+     ============================================================ */
+
+  /* Light accent — AUTHORITATIVE toolkit brand (SharedResourcesLight.xaml).
+     Real brand green, NOT the Fluent-derived ramp variants. */
+  --system-accent:                 #476A4A;   /* SystemAccentColorPrimary — brand green */
+  --system-accent-primary-light:   #476A4A;   /* primary */
+  --system-accent-secondary-light: #355038;   /* SystemAccentColorSecondary — deeper green */
+  --system-accent-tertiary-light:  #5A875C;   /* SystemAccentColorTertiary — mid, hover/pressed */
+
+  --system-accent-primary-dark:    var(--011-pg-500);   /* +17 brightness — #4CE484 */
+  --system-accent-secondary-dark:  var(--011-pg-400);   /* +17 −45 sat — #86EFAC ← most used in dark */
+  --system-accent-tertiary-dark:   var(--011-pg-300);   /* +17 −65 sat — #BBF7D0 */
+
+  /* === Text fill (Light theme — exact WPF-UI ARGB) === */
+  --text-primary:        rgba(0, 0, 0, 0.8941);   /* #E4000000 */
+  --text-secondary:      rgba(0, 0, 0, 0.6196);   /* #9E000000 */
+  --text-tertiary:       rgba(0, 0, 0, 0.4471);   /* #72000000 */
+  --text-disabled:       rgba(0, 0, 0, 0.3608);   /* #5C000000 */
+  --text-on-accent:      #FFFFFF;
+  --text-on-accent-2:    rgba(255, 255, 255, 0.70);
+  --text-on-accent-disabled: #FFFFFF;
+
+  --accent-text-primary:   #476A4A;
+  --accent-text-secondary: #355038;
+  --accent-text-tertiary:  #5A875C;
+
+  /* === Surfaces / Fills (Light — exact WPF-UI ARGB) === */
+  --fill-control-default:        rgba(255, 255, 255, 0.7020);   /* #B3FFFFFF */
+  --fill-control-secondary:      rgba(249, 249, 249, 0.5020);   /* #80F9F9F9 */
+  --fill-control-tertiary:       rgba(249, 249, 249, 0.3020);   /* #4DF9F9F9 */
+  --fill-control-disabled:       rgba(249, 249, 249, 0.3020);
+  --fill-control-input-active:   #FFFFFF;
+
+  --fill-subtle-secondary:       rgba(0, 0, 0, 0.0353);   /* #09000000 */
+  --fill-subtle-tertiary:        rgba(0, 0, 0, 0.0235);   /* #06000000 */
+  --fill-subtle-transparent:     transparent;
+
+  --fill-card-default:           rgba(255, 255, 255, 0.70);
+  --fill-card-secondary:         rgba(244, 244, 245, 0.50);
+  --fill-card-tertiary:          var(--011-gy-100);
+
+  --fill-smoke-default:          rgba(9, 9, 11, 0.30);
+
+  /* === Backgrounds (Light) ===
+     App/surface base is #FFFFFF (ApplicationBackgroundBrush) per the
+     toolkit. --window-background is also white in the light theme. */
+  --solid-background-base:       #FFFFFF;   /* ApplicationBackgroundBrush */
+  --solid-background-secondary:  #F3F3F3;
+  --solid-background-tertiary:   #F9F9F9;
+  --solid-background-quarternary:#FFFFFF;
+
+  --window-background:           #FFFFFF;   /* SystemAltHighColor → WindowBackgroundBrush */
+  --progress-overlay:            rgba(0, 0, 0, 0.50);   /* ProgressOverlayBackgroundColor #80000000 */
+
+  --layer-default:               rgba(255, 255, 255, 0.50);
+  --layer-alt:                   #FFFFFF;
+  --layer-on-accent:             rgba(255, 255, 255, 0.40);
+
+  --mica-base:                   #F3F3F3;       /* approximation */
+  --acrylic-base:                rgba(252, 252, 252, 0.85);
+
+  /* === Strokes / Dividers (Light — exact WPF-UI ARGB) === */
+  --stroke-control-default:      rgba(0, 0, 0, 0.0588);   /* #0F000000 */
+  --stroke-control-secondary:    rgba(0, 0, 0, 0.1608);   /* #29000000 */
+  --stroke-card:                 rgba(0, 0, 0, 0.0588);   /* #0F000000 */
+  --stroke-divider:              rgba(0, 0, 0, 0.0588);
+  --stroke-surface:              rgba(117, 117, 117, 0.40);
+  --stroke-focus-outer:          rgba(0, 0, 0, 0.8941);
+  --stroke-focus-inner:          #FFFFFF;
+
+  /* === Semantic === */
+  --system-success: var(--011-gr-700);    /* #15803D */
+  --system-caution: var(--011-yl-700);    /* #CA8A04 */
+  --system-critical:var(--011-rd-700);    /* #B91C1C */
+  --system-attention: var(--system-accent-secondary-light);
+  --system-neutral: rgba(9, 9, 11, 0.4458);
+
+  /* === Shadows (Fluent elevation) === */
+  --shadow-card:        0 1px 2px rgba(9, 9, 11, 0.04), 0 1px 1px rgba(9, 9, 11, 0.06);
+  --shadow-flyout:      0 4px 8px rgba(9, 9, 11, 0.10), 0 0 1px rgba(9, 9, 11, 0.30);
+  --shadow-dialog:      0 32px 64px rgba(9, 9, 11, 0.18), 0 0 8px rgba(9, 9, 11, 0.12);
+  --shadow-tooltip:     0 4px 8px rgba(9, 9, 11, 0.14);
+
+  /* === Radii (Fluent) === */
+  --radius-control: 4px;       /* buttons, inputs */
+  --radius-control-large: 8px; /* cards, dialogs */
+  --radius-pill: 999px;
+  --radius-overlay: 8px;
+
+  /* === Spacing scale (4-pt) === */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-7: 32px;
+  --sp-8: 40px;
+  --sp-9: 48px;
+
+  /* === Typography ===
+     WPF UI uses Segoe UI Variable on Win11. The app's brand faces are
+     Plus Jakarta Sans (PrimaryFontFamily) and DM Mono (SecondaryFontFamily)
+     from SharedStyles.xaml. The Segoe stack is preserved as fallback so
+     native WPF apps still get the right Win11 metrics. */
+  --font-family:
+    "Plus Jakarta Sans",
+    "Segoe UI Variable", "Segoe UI",
+    -apple-system, BlinkMacSystemFont,
+    "Helvetica Neue", Arial, sans-serif;
+  --font-family-mono:
+    "DM Mono",
+    "Cascadia Code", "Cascadia Mono", "Consolas",
+    ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-icon: "FluentSystemIcons-Regular";
+  --font-icon-filled: "FluentSystemIcons-Filled";
+
+  /* Fluent type ramp */
+  --type-caption-size: 12px;   --type-caption-line: 16px;  --type-caption-weight: 400;
+  --type-body-size:    14px;   --type-body-line:    20px;  --type-body-weight:    400;
+  --type-body-strong:  14px;   --type-body-strong-weight: 600;
+  --type-body-large-size: 18px;--type-body-large-line: 24px;
+  --type-subtitle-size:20px;   --type-subtitle-line: 28px; --type-subtitle-weight:600;
+  --type-title-size:   28px;   --type-title-line:   36px;  --type-title-weight:   600;
+  --type-title-large:  40px;   --type-title-large-line: 52px;
+  --type-display-size: 68px;   --type-display-line: 92px;  --type-display-weight: 600;
+}
+
+/* ============= Dark theme =============
+   AUTHORITATIVE — values transcribed from the running app's
+   SharedResourcesDark.xaml (toolkit brand overrides) + the merged
+   WPF-UI ui:ThemesDictionary Theme="Dark". These take precedence over
+   stock Fluent dark values for anything the app actually renders.
+
+   Key departures from stock WPF-UI dark:
+   - Accent is SAGE GREEN (#9BB69E / #7A9E7D), not bright green.
+   - Two toolkit-only tokens: --window-background (#454F61 blue-gray)
+     and --progress-overlay (#80000000 scrim).
+   - Card stroke is BLACK-based (#19000000), not white.
+   ============================================================ */
+.theme-dark, [data-theme="dark"] {
+  /* --- Toolkit brand accent (SharedResourcesDark.xaml) --- */
+  --system-accent:                 #9BB69E;   /* sage green — real brand accent */
+  --system-accent-primary-dark:    #9BB69E;   /* SystemAccentColorPrimary */
+  --system-accent-secondary-dark:  #9BB69E;   /* SystemAccentColorSecondary */
+  --system-accent-tertiary-dark:   #7A9E7D;   /* SystemAccentColorTertiary — pressed/hover */
+
+  /* --- Text (WPF-UI dark keys, exact ARGB) --- */
+  --text-primary:        #FFFFFF;                       /* TextFillColorPrimary */
+  --text-secondary:      rgba(255, 255, 255, 0.7725);   /* #C5FFFFFF */
+  --text-tertiary:       rgba(255, 255, 255, 0.5294);   /* #87FFFFFF */
+  --text-disabled:       rgba(255, 255, 255, 0.3647);   /* #5DFFFFFF */
+  --text-on-accent:      #1A2E1C;                        /* dark ink on sage */
+  --text-on-accent-2:    rgba(26, 46, 28, 0.65);
+
+  --accent-text-primary:   #9BB69E;
+  --accent-text-secondary: #7A9E7D;
+  --accent-text-tertiary:  #9BB69E;
+
+  /* --- Control fills (exact ARGB from dark dict) --- */
+  --fill-control-default:        rgba(255, 255, 255, 0.0588);   /* #0FFFFFFF */
+  --fill-control-secondary:      rgba(255, 255, 255, 0.0824);   /* #15FFFFFF */
+  --fill-control-tertiary:       rgba(255, 255, 255, 0.0431);   /* #0BFFFFFF */
+  --fill-control-disabled:       rgba(255, 255, 255, 0.0431);
+  --fill-control-input-active:   rgba(30, 30, 30, 0.70);
+
+  --fill-subtle-secondary:       rgba(255, 255, 255, 0.0588);   /* #0FFFFFFF */
+  --fill-subtle-tertiary:        rgba(255, 255, 255, 0.0431);   /* #0BFFFFFF */
+
+  --fill-card-default:           rgba(255, 255, 255, 0.0512);
+  --fill-card-secondary:         rgba(255, 255, 255, 0.0326);
+  --fill-card-tertiary:          rgba(255, 255, 255, 0.0824);
+
+  --fill-smoke-default:          rgba(0, 0, 0, 0.30);
+
+  /* --- Backgrounds ---
+     App/surface base is stock WPF-UI #202020 (ApplicationBackgroundBrush).
+     The blue-gray #454F61 is the toolkit's per-WINDOW base, exposed as
+     --window-background (use it on FluentWindow chrome, not content cards). */
+  --solid-background-base:       #202020;   /* ApplicationBackgroundBrush */
+  --solid-background-secondary:  #1C1C1C;
+  --solid-background-tertiary:   #282828;
+  --solid-background-quarternary:#2C2C2C;
+
+  --window-background:           #454F61;   /* SystemAltHighColor → WindowBackgroundBrush */
+  --progress-overlay:            rgba(0, 0, 0, 0.50);   /* ProgressOverlayBackgroundColor #80000000 */
+
+  --layer-default:               rgba(58, 62, 66, 0.30);
+  --layer-alt:                   rgba(255, 255, 255, 0.0538);
+  --layer-on-accent:              rgba(0, 0, 0, 0.50);
+
+  --mica-base:                   #202020;
+  --acrylic-base:                rgba(44, 44, 44, 0.85);
+
+  --stroke-control-default:      rgba(255, 255, 255, 0.0706);   /* #12FFFFFF */
+  --stroke-control-secondary:    rgba(255, 255, 255, 0.10);
+  --stroke-card:                 rgba(0, 0, 0, 0.0980);         /* #19000000 — black-based */
+  --stroke-divider:              rgba(255, 255, 255, 0.0824);
+  --stroke-surface:              rgba(139, 161, 183, 0.40);
+  --stroke-focus-outer:          #FFFFFF;
+  --stroke-focus-inner:          #1A2E1C;
+
+  --system-success: var(--011-pg-400);    /* #86EFAC */
+  --system-caution: var(--011-yl-300);    /* #FDE047 */
+  --system-critical:var(--011-rd-300);    /* #FCA5A5 */
+  --system-attention: #9BB69E;
+}
+
+/* ============= Semantic / Element styles ============= */
+html, body {
+  font-family: var(--font-family);
+  color: var(--text-primary);
+  background: var(--solid-background-base);
+}
+
+h1, .h-display {
+  font: var(--type-display-weight) var(--type-display-size)/var(--type-display-line) var(--font-family);
+  letter-spacing: -0.02em; margin: 0;
+}
+h2, .h-title-large {
+  font-weight: 600; font-size: var(--type-title-large); line-height: var(--type-title-large-line); margin: 0;
+  letter-spacing: -0.015em;
+}
+h3, .h-title {
+  font-weight: var(--type-title-weight); font-size: var(--type-title-size); line-height: var(--type-title-line); margin: 0;
+  letter-spacing: -0.01em;
+}
+h4, .h-subtitle {
+  font-weight: var(--type-subtitle-weight); font-size: var(--type-subtitle-size); line-height: var(--type-subtitle-line); margin: 0;
+  letter-spacing: -0.005em;
+}
+h5, .h-body-large {
+  font-weight: 400; font-size: var(--type-body-large-size); line-height: var(--type-body-large-line); margin: 0;
+}
+h6, .h-body-strong {
+  font-weight: 600; font-size: var(--type-body-size); line-height: var(--type-body-line); margin: 0;
+}
+p, .h-body {
+  font-weight: 400; font-size: var(--type-body-size); line-height: var(--type-body-line); margin: 0;
+}
+small, .h-caption {
+  font-weight: 400; font-size: var(--type-caption-size); line-height: var(--type-caption-line);
+  color: var(--text-secondary);
+}
+code, kbd, samp, pre {
+  font-family: var(--font-family-mono); font-size: 13px;
+}
+
+a, .accent-link {
+  color: var(--accent-text-primary);
+  text-decoration: none;
+}
+a:hover, .accent-link:hover { color: var(--accent-text-secondary); }
+a:active, .accent-link:active { color: var(--accent-text-tertiary); }
+
+hr, .divider {
+  border: 0; border-top: 1px solid var(--stroke-divider); margin: var(--sp-4) 0;
+}
+
+/* Brand-only utility — the deep-forest logo green. Keep it OUT of the
+   accent system; use only for the institutional wordmark + occasional
+   editorial accents (sustainability badges, low-carbon callouts). */
+.brand-logo-fill { fill: var(--011-logo); color: var(--011-logo); }
+
+
+/* gallery.css - WPF UI Gallery recreation */
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; overflow: hidden; font-family: var(--font-family); background: #888; }
+
+/* FluentWindow */
+.fw {
+  width: 100%; height: 100vh;
+  background: var(--mica-base);
+  color: var(--text-primary);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+.fw-titlebar {
+  height: 36px;
+  display: flex; align-items: center; justify-content: space-between;
+  -webkit-app-region: drag;
+  padding-left: 12px;
+  flex: 0 0 auto;
+}
+.fw-tb-left { display: flex; align-items: center; gap: 10px; }
+.fw-tb-logo {
+  width: 44px; height: auto; color: var(--011-logo);
+  flex: 0 0 auto;
+}
+.theme-dark .fw-tb-logo { color: var(--011-pg-400); }
+.fw-tb-icon { width: 18px; height: 18px; border-radius: 3px; }
+.fw-tb-title { font-size: 12px; color: var(--text-primary); }
+.fw-tb-right { display: flex; height: 100%; }
+.fw-tb-btn {
+  width: 46px; height: 100%; border: 0; background: transparent;
+  font-size: 11px; color: var(--text-primary); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  -webkit-app-region: no-drag;
+}
+.fw-tb-btn:hover { background: rgba(0,0,0,.05); }
+.theme-dark .fw-tb-btn:hover { background: rgba(255,255,255,.07); }
+.fw-tb-close:hover { background: var(--system-critical); color: #fff; }
+
+.fw-body { flex: 1; min-height: 0; display: flex; }
+
+/* NavigationView */
+.nv {
+  width: 280px; flex: 0 0 280px;
+  background: rgba(255,255,255,0.4);
+  backdrop-filter: blur(40px) saturate(125%);
+  border-right: 1px solid var(--stroke-divider);
+  display: flex; flex-direction: column;
+}
+.theme-dark .nv { background: rgba(255,255,255,0.04); }
+.nv-header { padding: 8px 12px; display: flex; align-items: center; gap: 8px; }
+.nv-toggle {
+  width: 36px; height: 36px; border: 0; background: transparent;
+  border-radius: 4px; cursor: pointer; display: inline-flex;
+  align-items: center; justify-content: center;
+  font-family: "FluentSystemIcons-Regular"; font-size: 18px; color: var(--text-primary);
+}
+.nv-toggle:hover { background: rgba(0,0,0,.04); }
+.theme-dark .nv-toggle:hover { background: rgba(255,255,255,.06); }
+.nv-search {
+  flex: 1; display: flex; align-items: center; gap: 8px;
+  background: var(--fill-control-default);
+  border: 1px solid var(--stroke-control-default);
+  border-bottom-color: var(--stroke-control-secondary);
+  border-radius: 4px; padding: 0 8px; height: 32px;
+}
+.nv-search input {
+  flex: 1; border: 0; outline: 0; background: transparent;
+  font-family: inherit; font-size: 13px; color: var(--text-primary);
+}
+.nv-search-ic { font-family: "FluentSystemIcons-Regular"; font-size: 16px; color: var(--text-secondary); }
+
+.nv-scroll { flex: 1; overflow-y: auto; padding: 4px 8px; }
+.nv-section { margin-bottom: 8px; }
+.nv-group {
+  font-size: 11px; font-weight: 600; color: var(--text-secondary);
+  text-transform: uppercase; letter-spacing: .04em;
+  padding: 8px 12px 4px;
+}
+.nv-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 8px 12px; border-radius: 4px; cursor: pointer;
+  font-size: 14px; position: relative; user-select: none;
+}
+.nv-item:hover { background: rgba(0,0,0,.04); }
+.theme-dark .nv-item:hover { background: rgba(255,255,255,.06); }
+.nv-sel { background: rgba(0,0,0,.04); font-weight: 600; }
+.theme-dark .nv-sel { background: rgba(255,255,255,.07); }
+.nv-sel::before {
+  content: ""; position: absolute; left: 0; top: 8px; bottom: 8px;
+  width: 3px; border-radius: 2px; background: var(--accent-text-primary);
+}
+.nv-ic { font-family: "FluentSystemIcons-Regular"; font-size: 18px; flex: 0 0 auto; }
+.nv-sel .nv-ic { font-family: "FluentSystemIcons-Filled"; color: var(--accent-text-primary); }
+.nv-lbl { flex: 1; }
+.nv-badge {
+  font-size: 11px; font-weight: 600; background: var(--accent-text-primary); color: #fff;
+  border-radius: 999px; padding: 1px 8px;
+}
+.nv-footer { padding: 8px 12px; border-top: 1px solid var(--stroke-divider); }
+
+/* Content area */
+.content {
+  flex: 1; min-width: 0; overflow-y: auto;
+  background: var(--solid-background-base);
+  padding: 16px 32px 48px;
+}
+.content-header {
+  padding: 12px 0 24px;
+  display: flex; align-items: flex-end; justify-content: space-between;
+}
+.breadcrumb {
+  display: flex; align-items: center; gap: 6px; color: var(--text-secondary); font-size: 12px;
+}
+.breadcrumb b { color: var(--text-primary); font-weight: 600; }
+.page-title { font-size: 28px; font-weight: 600; line-height: 36px; margin: 6px 0 0; }
+.page-subtitle { font-size: 14px; color: var(--text-secondary); margin-top: 4px; }
+
+.section-title { font-size: 20px; font-weight: 600; margin: 24px 0 12px; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+
+/* Buttons */
+.ui-btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: inherit; font-size: 14px; font-weight: 600;
+  padding: 6px 14px; min-height: 32px;
+  border-radius: 4px; cursor: pointer; line-height: 20px;
+  border: 1px solid var(--stroke-control-default);
+  background: var(--fill-control-default);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-card);
+  transition: background 120ms;
+}
+.ui-btn:hover { background: rgba(0,0,0,.04); }
+.theme-dark .ui-btn:hover { background: rgba(255,255,255,.08); }
+.ui-btn:active { background: rgba(0,0,0,.08); }
+.ui-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+.ui-btn-primary {
+  background: var(--system-accent-primary-light); border-color: var(--system-accent-secondary-light); color: #fff;
+}
+.theme-dark .ui-btn-primary {
+  background: var(--system-accent-secondary-dark); border-color: rgba(255,255,255,.08); color: #000;
+}
+.ui-btn-primary:hover { background: var(--system-accent); }
+.ui-btn-primary:active { background: var(--system-accent-secondary-light); }
+
+.ui-btn-subtle { background: transparent; border-color: transparent; box-shadow: none; }
+.ui-btn-subtle:hover { background: rgba(0,0,0,.04); }
+.theme-dark .ui-btn-subtle:hover { background: rgba(255,255,255,.07); }
+
+.ui-btn-danger { background: var(--system-critical); border-color: var(--011-rd-800); color: #fff; }
+.ui-btn-danger:hover { background: var(--011-rd-600); }
+
+.ui-btn-ic { font-family: "FluentSystemIcons-Regular"; font-size: 16px; }
+
+/* TextBox / Field */
+.ui-field { display: flex; flex-direction: column; gap: 4px; }
+.ui-field-lbl { font-size: 12px; font-weight: 600; color: var(--text-primary); }
+.ui-field-help { font-size: 11px; color: var(--text-secondary); }
+.ui-tb {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--fill-control-input-active);
+  border: 1px solid var(--stroke-control-default);
+  border-bottom-color: var(--stroke-control-secondary);
+  border-radius: 4px; padding: 0 10px; height: 32px;
+}
+.ui-tb:focus-within { border-bottom: 2px solid var(--accent-text-primary); padding-bottom: 0; }
+.ui-tb input {
+  flex: 1; border: 0; outline: 0; background: transparent;
+  font-family: inherit; font-size: 14px; color: var(--text-primary); height: 100%;
+}
+.ui-tb-ic { font-family: "FluentSystemIcons-Regular"; font-size: 16px; color: var(--text-secondary); }
+
+/* Toggle */
+.ui-toggle { display: inline-flex; align-items: center; gap: 12px; cursor: pointer; user-select: none; }
+.ui-sw {
+  width: 40px; height: 20px; border-radius: 999px;
+  background: transparent; border: 1px solid rgba(0,0,0,.45);
+  position: relative; flex: 0 0 auto; transition: background 150ms, border-color 150ms;
+}
+.theme-dark .ui-sw { border-color: rgba(255,255,255,.55); background: rgba(255,255,255,.06); }
+.ui-sw-thumb {
+  position: absolute; top: 50%; left: 4px; transform: translate(0,-50%);
+  width: 12px; height: 12px; border-radius: 50%; background: rgba(0,0,0,.6);
+  transition: left 150ms, background 150ms;
+}
+.ui-sw-on { background: var(--accent-text-primary); border-color: var(--accent-text-primary); }
+.ui-sw-on .ui-sw-thumb { left: 24px; background: #fff; }
+.ui-toggle-lbl { font-size: 14px; }
+
+/* Checkbox */
+.ui-cb-row { display: inline-flex; align-items: center; gap: 10px; cursor: pointer; user-select: none; }
+.ui-cb {
+  width: 18px; height: 18px; border: 1px solid rgba(0,0,0,.45);
+  border-radius: 3px; display: inline-flex; align-items: center; justify-content: center;
+  font-family: "FluentSystemIcons-Filled"; font-size: 12px; color: #fff;
+}
+.theme-dark .ui-cb { border-color: rgba(255,255,255,.55); }
+.ui-cb-on { background: var(--accent-text-primary); border-color: var(--accent-text-primary); }
+
+/* Card */
+.ui-card {
+  background: var(--fill-card-default);
+  border: 1px solid var(--stroke-card);
+  border-radius: 8px; padding: 16px;
+  display: flex; flex-direction: column; gap: 8px;
+  box-shadow: var(--shadow-card);
+}
+.theme-dark .ui-card { background: var(--fill-card-default); }
+.ui-card-hover { cursor: pointer; transition: background 120ms; }
+.ui-card-hover:hover { background: rgba(0,0,0,.02); }
+.theme-dark .ui-card-hover:hover { background: rgba(255,255,255,.04); }
+.ui-card-head { display: flex; align-items: center; gap: 12px; }
+.ui-card-ic { font-family: "FluentSystemIcons-Regular"; font-size: 20px; color: var(--accent-text-primary); }
+.ui-card-ttl { font-size: 14px; font-weight: 600; flex: 1; }
+.ui-card-act { margin-left: auto; }
+.ui-card-body { font-size: 13px; color: var(--text-secondary); line-height: 18px; }
+
+/* Badge */
+.ui-badge { display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+.ui-badge-default { background: rgba(0,0,0,.05); color: var(--text-primary); }
+.theme-dark .ui-badge-default { background: rgba(255,255,255,.08); }
+.ui-badge-accent { background: var(--accent-text-primary); color: #fff; }
+.ui-badge-success { background: var(--system-success); color: #fff; }
+.ui-badge-caution { background: var(--system-caution); color: #fff; }
+.ui-badge-critical { background: var(--system-critical); color: #fff; }
+
+/* InfoBar */
+.ui-infobar {
+  display: flex; align-items: flex-start; gap: 10px;
+  background: var(--fill-card-default);
+  border: 1px solid var(--stroke-card);
+  border-radius: 6px; padding: 10px 12px;
+}
+.ui-infobar-info { border-left: 4px solid var(--accent-text-primary); }
+.ui-infobar-success { border-left: 4px solid var(--system-success); }
+.ui-infobar-caution { border-left: 4px solid var(--system-caution); }
+.ui-infobar-critical { border-left: 4px solid var(--system-critical); }
+.ui-infobar-ic { font-family: "FluentSystemIcons-Filled"; font-size: 18px; }
+.ui-infobar-info .ui-infobar-ic { color: var(--accent-text-primary); }
+.ui-infobar-success .ui-infobar-ic { color: var(--system-success); }
+.ui-infobar-caution .ui-infobar-ic { color: var(--system-caution); }
+.ui-infobar-critical .ui-infobar-ic { color: var(--system-critical); }
+.ui-infobar-content { flex: 1; }
+.ui-infobar-ttl { font-size: 13px; font-weight: 600; }
+.ui-infobar-body { font-size: 12px; color: var(--text-secondary); }
+.ui-infobar-close { border: 0; background: transparent; cursor: pointer; color: var(--text-secondary); font-family: "FluentSystemIcons-Regular"; }
+
+.ficon { font-style: normal; font-family: "FluentSystemIcons-Regular"; }
+
+/* Color swatch row for ColorsPage */
+.color-row { display: flex; gap: 12px; }
+.color-row .swatch { flex: 1; border-radius: 6px; border: 1px solid var(--stroke-card); overflow: hidden; }
+.color-row .chip { height: 56px; }
+.color-row .meta { padding: 6px 10px; font-size: 11px; background: var(--fill-card-default); }
+.color-row .meta b { display: block; font-weight: 600; }
+.color-row .meta span { color: var(--text-secondary); font-family: var(--font-family-mono); font-size: 10px; }
+
+.controls-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+
+
+body{margin:0;background:#f0eee9;font-family:var(--font-family)}a{color:#476A4A}a:hover{color:#355038}

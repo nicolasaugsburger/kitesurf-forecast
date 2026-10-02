@@ -35,3 +35,11 @@ export const CMP_SHORT = [
   "N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE",
   "S", "SSO", "SO", "OSO", "O", "ONO", "NO", "NNO",
 ];
+
+/** Rosa de 16 puntos en español, igual que la del backend. */
+export const CMP_LONG = [
+  "Norte", "Nornoreste", "Noreste", "Estenoreste",
+  "Este", "Estesureste", "Sureste", "Sursureste",
+  "Sur", "Sursuroeste", "Suroeste", "Oestesuroeste",
+  "Oeste", "Oestenoroeste", "Noroeste", "Nornoroeste",
+];
