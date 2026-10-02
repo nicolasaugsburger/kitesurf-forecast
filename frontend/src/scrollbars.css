@@ -1,0 +1,50 @@
+/* ============================================================
+   Barras de desplazamiento oscuras.
+
+   En un fichero aparte de tokens.css a propósito: aquel viene extraído del
+   diseño y conviene poder regenerarlo sin perder esto.
+
+   `color-scheme: dark` es la base: le dice al navegador que pinte en oscuro
+   las barras nativas, los menús desplegables y los controles de formulario.
+   El resto es afinado para Chrome, cuyo pulgar por defecto queda demasiado
+   claro sobre el fondo #202020.
+   ============================================================ */
+
+:root {
+  color-scheme: dark;
+}
+
+/* Estándar (Firefox y Chrome moderno): pulgar y canal. */
+html {
+  scrollbar-color: #3A3A3A transparent;
+  scrollbar-width: thin;
+}
+
+/* WebKit: control fino del tamaño y la forma. */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  /* El borde transparente con background-clip deja aire alrededor del pulgar,
+     que si no toca los bordes y se ve tosco. */
+  background: #3A3A3A;
+  background-clip: padding-box;
+  border: 2px solid transparent;
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #4F4F4F;
+  background-clip: padding-box;
+}
+
+/* El cuadradito donde se cruzan la barra vertical y la horizontal. */
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
