@@ -28,6 +28,7 @@ export type FilaSpot = {
   short: string;
   drive: string;
   country: string;
+  lat: number;
   facing: number;
   far: boolean;
   /** día -> 12 celdas (horas 8..19), null si el modelo no da esa hora */
@@ -83,13 +84,15 @@ export function useGrid(data: ForecastResponse | null): Grid | null {
           short: meta?.short ?? spot.name,
           drive: meta?.drive ?? "—",
           country: spot.country,
+          lat: spot.lat,
           facing: meta?.facing ?? 0,
           far: meta?.far ?? false,
           porDia,
         };
       })
-      // Orden por cercanía: el coche pesa en la decisión tanto como el viento.
-      .sort((a, b) => (SPOT_META[a.id]?.min ?? 999) - (SPOT_META[b.id]?.min ?? 999));
+      // Orden geográfico, de norte a sur: así la lista se lee como la costa y
+      // cada spot cae donde uno lo tiene en la cabeza.
+      .sort((a, b) => b.lat - a.lat);
 
     const ventanasPorDia = new Map<string, Ventana[]>();
     const descartadosPorDia = new Map<string, { name: string; why: string }[]>();
