@@ -266,14 +266,10 @@ function VistaEscritorio({
                     borderBottom: "1px solid var(--stroke-divider)",
                   }}
                 >
-                  <span>
-                    {etiquetaDia(d).largo}
-                    <span style={{ fontWeight: 400, color: "var(--text-tertiary)", marginLeft: 8, fontSize: 12 }}>
-                      {n === 1 ? "1 ventana" : `${n} ventanas`}
-                    </span>
-                  </span>
-                  <span style={{ font: "400 11px/14px var(--font-family-mono)", color: "var(--text-tertiary)" }}>
-                    AROME
+                  <span>{etiquetaDia(d).largo}</span>
+                  {/* Al borde derecho del bloque, que es donde acaba su día. */}
+                  <span style={{ fontWeight: 400, color: "var(--text-tertiary)", fontSize: 12 }}>
+                    {n === 1 ? "1 ventana" : `${n} ventanas`}
                   </span>
                 </div>
               );
