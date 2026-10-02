@@ -6,13 +6,14 @@
  * días no pasa de 24 nudos, así que con datos de verdad no se ven ni el rojo
  * ni el violeta.
  *
- * Para volver a la API: poner USAR_DEMO en false (o borrar este fichero y su
- * uso en useForecast.ts).
+ * Desactivado: la aplicación tira de la API. Se conserva porque con viento
+ * real flojo no se ven las bandas altas, así que sirve para revisar la escala
+ * de color cuando se toque. Para usarlo: USAR_DEMO = true.
  */
 import type { ForecastResponse, SpotForecastOut } from "./api";
 import { CMP_LONG, HOURS, SPOT_META } from "./spots";
 
-export const USAR_DEMO = true;
+export const USAR_DEMO = false;
 
 const SPOTS: Array<{ id: string; name: string; country: string; lat: number; lon: number }> = [
   { id: "barcelona", name: "Barcelona", country: "ES", lat: 41.38, lon: 2.19 },
