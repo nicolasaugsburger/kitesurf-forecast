@@ -2,7 +2,7 @@
 
 Dos responsabilidades deliberadamente separadas:
 
-- `fetch_raw()` habla por HTTP (impuro, necesita red).
+- `fetch_raw()` habla por HTTP (impuro, necesita red, async).
 - `normalize()` transforma la respuesta en dataclasses (puro, testeable con un
   fixture y sin red). Ahí es donde viven los errores de verdad.
 
@@ -14,7 +14,9 @@ el borde (el script o, más adelante, la API).
 from dataclasses import dataclass
 from datetime import datetime, timezone
 
-import requests
+import asyncio
+
+import httpx
 
 from app.config import (
     API_URL,
@@ -46,7 +48,13 @@ class SpotForecast:
     hours: list[ForecastHour]
 
 
-def fetch_raw(spots: list[Spot]) -> list[dict]:
+# Reintentos solo donde tiene sentido: fallos de conexión, 5xx y 429. Un 4xx
+# significa que la petición está mal construida y reintentarla no la arregla.
+REINTENTOS = 3
+ESPERAS = [1.0, 2.0, 4.0]
+
+
+async def fetch_raw(client: httpx.AsyncClient, spots: list[Spot]) -> list[dict]:
     """Pide TODOS los spots en una sola petición (coordenadas separadas por comas).
 
     Open-Meteo devuelve un array en el mismo orden de entrada. Ojo: el elemento 0
@@ -62,11 +70,7 @@ def fetch_raw(spots: list[Spot]) -> list[dict]:
         "timeformat": "unixtime",
         "wind_speed_unit": WIND_SPEED_UNIT,
     }
-    response = requests.get(
-        API_URL, params=params, headers={"User-Agent": USER_AGENT}, timeout=HTTP_TIMEOUT
-    )
-    response.raise_for_status()
-    data = response.json()
+    data = await _get_con_reintentos(client, params)
 
     # Con una sola coordenada la API devuelve un objeto; con varias, una lista.
     return data if isinstance(data, list) else [data]
@@ -110,6 +114,31 @@ def normalize_spot(spot: Spot, result: dict) -> SpotForecast:
     )
 
 
-def fetch_forecast(spots: list[Spot]) -> list[SpotForecast]:
+async def _get_con_reintentos(client: httpx.AsyncClient, params: dict) -> object:
+    ultimo: Exception | None = None
+    for intento in range(REINTENTOS):
+        try:
+            response = await client.get(API_URL, params=params)
+            if response.status_code == 429 or response.status_code >= 500:
+                response.raise_for_status()
+            response.raise_for_status()
+            return response.json()
+        except httpx.HTTPStatusError as exc:
+            # Un 4xx (salvo 429) no se arregla reintentando: aborta ya.
+            if exc.response.status_code < 500 and exc.response.status_code != 429:
+                raise
+            ultimo = exc
+        except (httpx.TimeoutException, httpx.TransportError) as exc:
+            ultimo = exc
+
+        if intento < REINTENTOS - 1:
+            await asyncio.sleep(ESPERAS[intento])
+
+    raise ultimo  # type: ignore[misc]
+
+
+async def fetch_forecast(
+    client: httpx.AsyncClient, spots: list[Spot]
+) -> list[SpotForecast]:
     """Atajo: pide y normaliza."""
-    return normalize(spots, fetch_raw(spots))
+    return normalize(spots, await fetch_raw(client, spots))

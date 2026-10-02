@@ -54,3 +54,42 @@ def respuesta_sintetica() -> list[dict]:
         }
 
     return [resultado(i) for i in range(3)]
+
+
+@pytest.fixture
+def api(respuesta_real, monkeypatch):
+    """Cliente de prueba con Open-Meteo falseado por debajo del cliente httpx.
+
+    Se sustituye el transporte, no la función: el código recorre su camino real
+    (reintentos, parseo, emparejamiento por posición) y solo cambia el cable.
+
+    Devuelve (cliente, estado) donde `estado` lleva la cuenta de llamadas y
+    permite programar fallos desde el test.
+    """
+    import httpx
+    from fastapi.testclient import TestClient
+
+    from app.cache import ForecastCache
+    from app.main import app
+
+    monkeypatch.setattr("app.openmeteo.ESPERAS", [0.0, 0.0, 0.0])  # sin esperas reales
+
+    estado = {"llamadas": 0, "respuestas": []}  # respuestas: lista de códigos a devolver
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        estado["llamadas"] += 1
+        codigo = estado["respuestas"].pop(0) if estado["respuestas"] else 200
+        if codigo == 200:
+            return httpx.Response(200, json=respuesta_real)
+        return httpx.Response(codigo, json={"error": True})
+
+    with TestClient(app) as client:
+        # `app` es un objeto de módulo: sin esto, la caché de un test se filtra
+        # al siguiente y lo hace pasar por el motivo equivocado.
+        app.state.cache = ForecastCache()
+        anterior = app.state.http
+        app.state.http = httpx.AsyncClient(transport=httpx.MockTransport(handler))
+        try:
+            yield client, estado
+        finally:
+            app.state.http = anterior

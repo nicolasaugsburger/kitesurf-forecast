@@ -20,6 +20,15 @@ def to_utc_iso(moment: datetime) -> str:
     return moment.isoformat().replace("+00:00", "Z")
 
 
+def to_timestamp_iso(moment: datetime) -> str:
+    """Instante para los metadatos de la API, al segundo.
+
+    Centralizado a propósito: cuando cada endpoint lo formateaba por su cuenta,
+    el mismo `fetched_at` salía con microsegundos en unos y sin ellos en otros.
+    """
+    return to_utc_iso(moment.replace(microsecond=0))
+
+
 def to_local_iso(moment: datetime, tz: ZoneInfo = DISPLAY_TIMEZONE) -> str:
     """ISO 8601 en hora local, SIEMPRE con offset explícito.
 
@@ -45,7 +54,7 @@ def render_hour(hour: ForecastHour) -> dict:
 def render_spot(forecast: SpotForecast) -> dict:
     spot = forecast.spot
     return {
-        "spot": spot.id,
+        "id": spot.id,
         "name": spot.name,
         "country": spot.country,
         "lat": spot.lat,
@@ -53,4 +62,33 @@ def render_spot(forecast: SpotForecast) -> dict:
         "grid_lat": forecast.grid_lat,
         "grid_lon": forecast.grid_lon,
         "hours": [render_hour(hour) for hour in forecast.hours],
+    }
+
+
+def render_forecast(
+    entry,
+    *,
+    source: str,
+    model: str,
+    timezone_name: str,
+    ttl_seconds: int,
+    warnings: list[str] | None = None,
+) -> dict:
+    """Envuelve una entrada de caché en la respuesta completa de la API."""
+    from datetime import datetime, timezone as _tz
+
+    now = datetime.now(_tz.utc)
+    age = entry.age_seconds(now)
+    return {
+        "generated_at": to_timestamp_iso(now),
+        "source": source,
+        "model": model,
+        "timezone": timezone_name,
+        "fetched_at": to_timestamp_iso(entry.fetched_at),
+        "age_seconds": age,
+        # `stale` dice que servimos datos más viejos que el TTL porque el
+        # refresco falló: el cliente puede atenuarlos en vez de creérselos.
+        "stale": age >= ttl_seconds,
+        "warnings": warnings or [],
+        "spots": [render_spot(f) for f in entry.forecasts],
     }

@@ -5,17 +5,25 @@ Script fino: la lógica vive en el paquete `app`. Aquí solo queda la
 orquestación; el renderizado está en `app/render.py`.
 """
 
+import asyncio
 import json
 from datetime import datetime, timezone
 
-from app.config import DISPLAY_TIMEZONE, WEATHER_MODEL
+import httpx
+
+from app.config import DISPLAY_TIMEZONE, WEATHER_MODEL, settings
 from app.openmeteo import fetch_forecast
 from app.render import render_spot
 from app.spots import SPOTS
 
 
-def main():
-    forecasts = fetch_forecast(SPOTS)
+async def main():
+    async with httpx.AsyncClient(
+        headers={"User-Agent": settings.user_agent},
+        timeout=httpx.Timeout(connect=5.0, read=15.0, write=5.0, pool=5.0),
+    ) as client:
+        forecasts = await fetch_forecast(client, SPOTS)
+
     payload = {
         "generated_at": datetime.now(timezone.utc)
             .isoformat(timespec="seconds").replace("+00:00", "Z"),
@@ -33,4 +41,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
