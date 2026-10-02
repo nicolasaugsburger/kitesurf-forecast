@@ -309,6 +309,10 @@ function VistaEscritorio({
               // Se muestran TODAS: la cabecera dice cuántas hay y cortar la
               // lista en dos hacía que la pantalla se contradijera.
               const mostrar = compensan.length ? compensan : todas;
+              // En el alto caben dos tarjetas y media, así que a partir de la
+              // tercera aparece la barra. Solo entonces se paga su espacio:
+              // una columna sin scroll conserva el ancho de su bloque de arriba.
+              const conScroll = mostrar.length > 2;
               return (
                 <div
                   key={d}
@@ -317,15 +321,11 @@ function VistaEscritorio({
                     display: "flex",
                     flexDirection: "column",
                     gap: 6,
-                    // Dos tarjetas y media: el corte a media tarjeta es lo que
-                    // avisa de que abajo hay más.
-                    maxHeight: ALTO_TARJETA * 2 + 6 + 46,
-                    overflowY: "auto",
-                    // `stable` reserva el hueco de la barra haya scroll o no,
-                    // así las tarjetas miden lo mismo en los tres días. El
-                    // padding es el aire entre la tarjeta y la barra.
-                    scrollbarGutter: "stable",
-                    paddingRight: 8,
+                    // El corte a media tarjeta es lo que avisa de que hay más.
+                    maxHeight: conScroll ? ALTO_TARJETA * 2 + 6 + 46 : undefined,
+                    overflowY: conScroll ? "auto" : "visible",
+                    // Aire entre la tarjeta y la barra, solo donde hay barra.
+                    paddingRight: conScroll ? 8 : 0,
                   }}
                 >
                   {mostrar.length === 0 ? (
