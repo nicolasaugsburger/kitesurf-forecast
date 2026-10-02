@@ -321,6 +321,11 @@ function VistaEscritorio({
                     // avisa de que abajo hay más.
                     maxHeight: ALTO_TARJETA * 2 + 6 + 46,
                     overflowY: "auto",
+                    // `stable` reserva el hueco de la barra haya scroll o no,
+                    // así las tarjetas miden lo mismo en los tres días. El
+                    // padding es el aire entre la tarjeta y la barra.
+                    scrollbarGutter: "stable",
+                    paddingRight: 8,
                   }}
                 >
                   {mostrar.length === 0 ? (
